@@ -6,11 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type GetRecentPropertiesParams = {
-limit?: number;
+export type GetDashboardStatsParams = {
+from_date?: string;
+to_date?: string;
 kebele?: string;
 property_type?: string;
 status?: string;
-from_date?: string;
-to_date?: string;
 };

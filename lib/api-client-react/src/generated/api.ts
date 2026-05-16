@@ -24,9 +24,11 @@ import type {
   ApprovalRecord,
   AuthResponse,
   CheckDuplicateParams,
+  DailyTrend,
   DashboardStats,
   DuplicateCheckResult,
   EnumeratorPerformance,
+  GetDashboardStatsParams,
   GetMapPropertiesParams,
   GetPropertyReportParams,
   GetRecentPropertiesParams,
@@ -1481,20 +1483,27 @@ export function useCheckDuplicate<TData = Awaited<ReturnType<typeof checkDuplica
 
 
 
-export const getGetDashboardStatsUrl = () => {
+export const getGetDashboardStatsUrl = (params?: GetDashboardStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/dashboard/stats`
+  return stringifiedParams.length > 0 ? `/api/dashboard/stats?${stringifiedParams}` : `/api/dashboard/stats`
 }
 
 /**
  * @summary Get dashboard summary statistics
  */
-export const getDashboardStats = async ( options?: RequestInit): Promise<DashboardStats> => {
+export const getDashboardStats = async (params?: GetDashboardStatsParams, options?: RequestInit): Promise<DashboardStats> => {
 
-  return customFetch<DashboardStats>(getGetDashboardStatsUrl(),
+  return customFetch<DashboardStats>(getGetDashboardStatsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1507,23 +1516,23 @@ export const getDashboardStats = async ( options?: RequestInit): Promise<Dashboa
 
 
 
-export const getGetDashboardStatsQueryKey = () => {
+export const getGetDashboardStatsQueryKey = (params?: GetDashboardStatsParams,) => {
     return [
-    `/api/dashboard/stats`
+    `/api/dashboard/stats`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetDashboardStatsQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetDashboardStatsQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = ErrorType<unknown>>(params?: GetDashboardStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetDashboardStatsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetDashboardStatsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardStats>>> = ({ signal }) => getDashboardStats({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardStats>>> = ({ signal }) => getDashboardStats(params, { signal, ...requestOptions });
 
 
 
@@ -1541,11 +1550,11 @@ export type GetDashboardStatsQueryError = ErrorType<unknown>
  */
 
 export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashboardStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetDashboardStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetDashboardStatsQueryOptions(options)
+  const queryOptions = getGetDashboardStatsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1707,6 +1716,83 @@ export function useGetRecentProperties<TData = Awaited<ReturnType<typeof getRece
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRecentPropertiesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetDashboardTrendUrl = () => {
+
+
+
+
+  return `/api/dashboard/trend`
+}
+
+/**
+ * @summary Get daily registration counts for the last 30 days
+ */
+export const getDashboardTrend = async ( options?: RequestInit): Promise<DailyTrend[]> => {
+
+  return customFetch<DailyTrend[]>(getGetDashboardTrendUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDashboardTrendQueryKey = () => {
+    return [
+    `/api/dashboard/trend`
+    ] as const;
+    }
+
+
+export const getGetDashboardTrendQueryOptions = <TData = Awaited<ReturnType<typeof getDashboardTrend>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardTrend>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDashboardTrendQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardTrend>>> = ({ signal }) => getDashboardTrend({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDashboardTrend>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDashboardTrendQueryResult = NonNullable<Awaited<ReturnType<typeof getDashboardTrend>>>
+export type GetDashboardTrendQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get daily registration counts for the last 30 days
+ */
+
+export function useGetDashboardTrend<TData = Awaited<ReturnType<typeof getDashboardTrend>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDashboardTrend>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDashboardTrendQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

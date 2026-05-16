@@ -9,6 +9,7 @@ import type { KebeleCount } from './kebeleCount';
 
 export interface DashboardStats {
   total: number;
+  draft?: number;
   approved: number;
   pending: number;
   rejected: number;

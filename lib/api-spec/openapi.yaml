@@ -430,6 +430,27 @@ paths:
       operationId: getDashboardStats
       tags: [dashboard]
       summary: Get dashboard summary statistics
+      parameters:
+        - name: from_date
+          in: query
+          schema:
+            type: string
+        - name: to_date
+          in: query
+          schema:
+            type: string
+        - name: kebele
+          in: query
+          schema:
+            type: string
+        - name: property_type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Dashboard stats
@@ -463,6 +484,26 @@ paths:
           in: query
           schema:
             type: integer
+        - name: kebele
+          in: query
+          schema:
+            type: string
+        - name: property_type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+        - name: to_date
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Recent properties
@@ -472,6 +513,21 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Property"
+
+  /dashboard/trend:
+    get:
+      operationId: getDashboardTrend
+      tags: [dashboard]
+      summary: Get daily registration counts for the last 30 days
+      responses:
+        "200":
+          description: Daily trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyTrend"
 
   /map/properties:
     get:
@@ -931,6 +987,8 @@ components:
       properties:
         total:
           type: integer
+        draft:
+          type: integer
         approved:
           type: integer
         pending:
@@ -961,6 +1019,15 @@ components:
       required: [kebele, count]
       properties:
         kebele:
+          type: string
+        count:
+          type: integer
+
+    DailyTrend:
+      type: object
+      required: [date, count]
+      properties:
+        date:
           type: string
         count:
           type: integer

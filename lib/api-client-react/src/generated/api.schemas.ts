@@ -329,6 +329,7 @@ export interface KebeleCount {
 
 export interface DashboardStats {
   total: number;
+  draft?: number;
   approved: number;
   pending: number;
   rejected: number;
@@ -340,6 +341,11 @@ export interface DashboardStats {
   mixed: number;
   withoutGps: number;
   kebeleBreakdown: KebeleCount[];
+}
+
+export interface DailyTrend {
+  date: string;
+  count: number;
 }
 
 export interface MissingGpsProperty {
@@ -420,8 +426,21 @@ block_code?: string;
 exclude_id?: number;
 };
 
+export type GetDashboardStatsParams = {
+from_date?: string;
+to_date?: string;
+kebele?: string;
+property_type?: string;
+status?: string;
+};
+
 export type GetRecentPropertiesParams = {
 limit?: number;
+kebele?: string;
+property_type?: string;
+status?: string;
+from_date?: string;
+to_date?: string;
 };
 
 export type GetMapPropertiesParams = {

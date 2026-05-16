@@ -578,8 +578,17 @@ export const CheckDuplicateResponse = zod.object({
 /**
  * @summary Get dashboard summary statistics
  */
+export const GetDashboardStatsQueryParams = zod.object({
+  "from_date": zod.coerce.string().optional(),
+  "to_date": zod.coerce.string().optional(),
+  "kebele": zod.coerce.string().optional(),
+  "property_type": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional()
+})
+
 export const GetDashboardStatsResponse = zod.object({
   "total": zod.number(),
+  "draft": zod.number().optional(),
   "approved": zod.number(),
   "pending": zod.number(),
   "rejected": zod.number(),
@@ -611,7 +620,12 @@ export const GetByKebeleResponse = zod.array(GetByKebeleResponseItem)
  * @summary Get recently registered properties
  */
 export const GetRecentPropertiesQueryParams = zod.object({
-  "limit": zod.coerce.number().optional()
+  "limit": zod.coerce.number().optional(),
+  "kebele": zod.coerce.string().optional(),
+  "property_type": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional(),
+  "from_date": zod.coerce.string().optional(),
+  "to_date": zod.coerce.string().optional()
 })
 
 export const GetRecentPropertiesResponseItem = zod.object({
@@ -647,6 +661,16 @@ export const GetRecentPropertiesResponseItem = zod.object({
 }).optional()
 })
 export const GetRecentPropertiesResponse = zod.array(GetRecentPropertiesResponseItem)
+
+
+/**
+ * @summary Get daily registration counts for the last 30 days
+ */
+export const GetDashboardTrendResponseItem = zod.object({
+  "date": zod.string(),
+  "count": zod.number()
+})
+export const GetDashboardTrendResponse = zod.array(GetDashboardTrendResponseItem)
 
 
 /**
@@ -750,6 +774,7 @@ export const GetPropertyReportResponse = zod.object({
   "generatedAt": zod.string(),
   "summary": zod.object({
   "total": zod.number(),
+  "draft": zod.number().optional(),
   "approved": zod.number(),
   "pending": zod.number(),
   "rejected": zod.number(),
