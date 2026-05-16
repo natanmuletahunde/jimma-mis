@@ -13,4 +13,14 @@ if (!process.env.DATABASE_URL) {
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
+export async function testConnection(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await pool.query("SELECT 1");
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
+  }
+}
+
 export * from "./schema";

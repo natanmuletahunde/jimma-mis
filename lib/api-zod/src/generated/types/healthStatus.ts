@@ -8,4 +8,6 @@
 
 export interface HealthStatus {
   status: string;
+  databaseStatus: string;
+  timestamp: Date;
 }

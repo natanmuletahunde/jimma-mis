@@ -530,10 +530,15 @@ components:
   schemas:
     HealthStatus:
       type: object
-      required: [status]
+      required: [status, databaseStatus, timestamp]
       properties:
         status:
           type: string
+        databaseStatus:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
 
     LoginInput:
       type: object
