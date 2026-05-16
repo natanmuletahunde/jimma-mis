@@ -47,9 +47,11 @@ import type {
   PropertyUpdate,
   RejectionInput,
   ReportResponse,
+  RoleItem,
   Street,
   User,
   UserInput,
+  UserStatusUpdate,
   UserUpdate
 } from './api.schemas';
 
@@ -306,7 +308,7 @@ export const getListUsersUrl = (params?: ListUsersParams,) => {
 }
 
 /**
- * @summary List all users (admin only)
+ * @summary List all users (admin and city_officer)
  */
 export const listUsers = async (params?: ListUsersParams, options?: RequestInit): Promise<User[]> => {
 
@@ -353,7 +355,7 @@ export type ListUsersQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List all users (admin only)
+ * @summary List all users (admin and city_officer)
  */
 
 export function useListUsers<TData = Awaited<ReturnType<typeof listUsers>>, TError = ErrorType<unknown>>(
@@ -663,6 +665,155 @@ export const useDeleteUser = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeleteUserMutationOptions(options));
     }
+
+export const getUpdateUserStatusUrl = (id: number,) => {
+
+
+
+
+  return `/api/users/${id}/status`
+}
+
+/**
+ * @summary Activate or deactivate a user (admin only)
+ */
+export const updateUserStatus = async (id: number,
+    userStatusUpdate: UserStatusUpdate, options?: RequestInit): Promise<User> => {
+
+  return customFetch<User>(getUpdateUserStatusUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      userStatusUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateUserStatusMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserStatus>>, TError,{id: number;data: BodyType<UserStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserStatus>>, TError,{id: number;data: BodyType<UserStatusUpdate>}, TContext> => {
+
+const mutationKey = ['updateUserStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserStatus>>, {id: number;data: BodyType<UserStatusUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateUserStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserStatus>>>
+    export type UpdateUserStatusMutationBody = BodyType<UserStatusUpdate>
+    export type UpdateUserStatusMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Activate or deactivate a user (admin only)
+ */
+export const useUpdateUserStatus = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserStatus>>, TError,{id: number;data: BodyType<UserStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserStatus>>,
+        TError,
+        {id: number;data: BodyType<UserStatusUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUserStatusMutationOptions(options));
+    }
+
+export const getGetRolesUrl = () => {
+
+
+
+
+  return `/api/roles`
+}
+
+/**
+ * @summary List available roles
+ */
+export const getRoles = async ( options?: RequestInit): Promise<RoleItem[]> => {
+
+  return customFetch<RoleItem[]>(getGetRolesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRolesQueryKey = () => {
+    return [
+    `/api/roles`
+    ] as const;
+    }
+
+
+export const getGetRolesQueryOptions = <TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoles>>> = ({ signal }) => getRoles({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRolesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoles>>>
+export type GetRolesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List available roles
+ */
+
+export function useGetRoles<TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRolesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getListPropertiesUrl = (params?: ListPropertiesParams,) => {
   const normalizedParams = new URLSearchParams();

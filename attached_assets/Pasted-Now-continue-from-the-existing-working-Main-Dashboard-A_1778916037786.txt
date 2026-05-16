@@ -1,0 +1,129 @@
+Now continue from the existing working Main Dashboard Analytics module.
+
+Your task is to build the User Management and Role Administration module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend User Management APIs
+
+Create or fix these endpoints:
+
+GET /api/users
+GET /api/users/:id
+POST /api/users
+PUT /api/users/:id
+PATCH /api/users/:id/status
+DELETE /api/users/:id
+GET /api/roles
+
+2. User Fields
+
+Each user should have:
+
+- Full Name
+- Email
+- Phone Number
+- Role
+- Assigned Kebele
+- Assigned Street, optional
+- Status: Active / Inactive
+- Created At
+- Updated At
+
+3. User Creation Rules
+
+When Admin creates a user:
+
+- email must be unique
+- password must be hashed using bcrypt
+- role is required
+- assigned kebele is required for Kebele Officer and Enumerator
+- default password can be: Password@123
+- user status should be Active by default
+
+4. Frontend User Management Page
+
+Create or improve route:
+
+/users
+
+Features:
+
+- user list table
+- search by name, email, phone, role
+- filter by role
+- filter by status
+- add user button
+- edit user button
+- activate/deactivate user button
+- delete user button
+
+5. Add/Edit User Form
+
+Fields:
+
+- Full Name
+- Email
+- Phone Number
+- Role
+- Assigned Kebele
+- Assigned Street
+- Status
+- Password only when creating new user
+
+6. Role-Based Access
+
+Only Admin can:
+
+- create users
+- edit users
+- activate/deactivate users
+- delete users
+- manage roles
+
+City Officer can:
+
+- view users only
+
+Other roles:
+
+- no access to user management page
+
+7. Sidebar
+
+Show User Management menu only for Admin.
+
+8. Audit Logs
+
+For create, update, status change, and delete actions:
+
+- create audit log
+- save action type
+- performed by
+- affected user
+- timestamp
+- remark if available
+
+9. Final Check
+
+After implementation, test:
+
+- Admin can view users
+- Admin can create new user
+- duplicate email is blocked
+- password is hashed
+- Admin can edit user
+- Admin can activate/deactivate user
+- Admin can delete user
+- City Officer can view users only
+- other roles cannot access users page
+- sidebar shows menu correctly
+- audit logs are created
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues

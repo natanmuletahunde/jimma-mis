@@ -38,8 +38,12 @@ export interface User {
   role: UserRole;
   /** @nullable */
   kebeleId?: number | null;
+  /** @nullable */
+  kebeleName?: string | null;
   isActive: boolean;
   createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
 }
 
 export interface AuthResponse {
@@ -89,6 +93,16 @@ export interface UserUpdate {
   kebeleId?: number | null;
   isActive?: boolean;
   password?: string;
+}
+
+export interface UserStatusUpdate {
+  isActive: boolean;
+  remark?: string;
+}
+
+export interface RoleItem {
+  value: string;
+  label: string;
 }
 
 export type PropertyPropertyType = typeof PropertyPropertyType[keyof typeof PropertyPropertyType];
@@ -406,6 +420,7 @@ export interface Street {
 export type ListUsersParams = {
 role?: string;
 search?: string;
+status?: string;
 };
 
 export type ListPropertiesParams = {

@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListUsersParams = {
-role?: string;
-search?: string;
-status?: string;
-};
+export interface RoleItem {
+  value: string;
+  label: string;
+}

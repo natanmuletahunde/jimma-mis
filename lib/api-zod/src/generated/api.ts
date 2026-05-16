@@ -36,8 +36,10 @@ export const LoginResponse = zod.object({
   "phone": zod.string().nullish(),
   "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
   "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
   "isActive": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 })
 
@@ -53,17 +55,20 @@ export const GetMeResponse = zod.object({
   "phone": zod.string().nullish(),
   "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
   "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
   "isActive": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 
 
 /**
- * @summary List all users (admin only)
+ * @summary List all users (admin and city_officer)
  */
 export const ListUsersQueryParams = zod.object({
   "role": zod.coerce.string().optional(),
-  "search": zod.coerce.string().optional()
+  "search": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional()
 })
 
 export const ListUsersResponseItem = zod.object({
@@ -74,8 +79,10 @@ export const ListUsersResponseItem = zod.object({
   "phone": zod.string().nullish(),
   "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
   "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
   "isActive": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 export const ListUsersResponse = zod.array(ListUsersResponseItem)
 
@@ -109,8 +116,10 @@ export const GetUserResponse = zod.object({
   "phone": zod.string().nullish(),
   "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
   "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
   "isActive": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 
 
@@ -139,8 +148,10 @@ export const UpdateUserResponse = zod.object({
   "phone": zod.string().nullish(),
   "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
   "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
   "isActive": zod.boolean(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
 })
 
 
@@ -150,6 +161,43 @@ export const UpdateUserResponse = zod.object({
 export const DeleteUserParams = zod.object({
   "id": zod.coerce.number()
 })
+
+
+/**
+ * @summary Activate or deactivate a user (admin only)
+ */
+export const UpdateUserStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateUserStatusBody = zod.object({
+  "isActive": zod.boolean(),
+  "remark": zod.string().optional()
+})
+
+export const UpdateUserStatusResponse = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "fullName": zod.string(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "role": zod.enum(['admin', 'city_officer', 'kebele_officer', 'enumerator', 'viewer']),
+  "kebeleId": zod.number().nullish(),
+  "kebeleName": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().nullish()
+})
+
+
+/**
+ * @summary List available roles
+ */
+export const GetRolesResponseItem = zod.object({
+  "value": zod.string(),
+  "label": zod.string()
+})
+export const GetRolesResponse = zod.array(GetRolesResponseItem)
 
 
 /**

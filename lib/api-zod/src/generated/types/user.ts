@@ -18,6 +18,10 @@ export interface User {
   role: UserRole;
   /** @nullable */
   kebeleId?: number | null;
+  /** @nullable */
+  kebeleName?: string | null;
   isActive: boolean;
   createdAt: string;
+  /** @nullable */
+  updatedAt?: string | null;
 }
