@@ -862,28 +862,247 @@ export const GetEnumeratorPerformanceResponse = zod.array(GetEnumeratorPerforman
 /**
  * @summary List all kebeles
  */
+export const ListKebelesQueryParams = zod.object({
+  "status": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional()
+})
+
 export const ListKebelesResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "code": zod.string(),
-  "district": zod.string().nullish()
+  "city": zod.string(),
+  "subCity": zod.string().nullish(),
+  "woreda": zod.string().nullish(),
+  "district": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
 })
 export const ListKebelesResponse = zod.array(ListKebelesResponseItem)
 
 
 /**
- * @summary List streets with optional kebele filter
+ * @summary Create a new kebele
+ */
+export const CreateKebeleBody = zod.object({
+  "name": zod.string(),
+  "code": zod.string(),
+  "city": zod.string().optional(),
+  "subCity": zod.string().nullish(),
+  "woreda": zod.string().nullish(),
+  "district": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+
+/**
+ * @summary Update a kebele
+ */
+export const UpdateKebeleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateKebeleBody = zod.object({
+  "name": zod.string(),
+  "code": zod.string(),
+  "city": zod.string().optional(),
+  "subCity": zod.string().nullish(),
+  "woreda": zod.string().nullish(),
+  "district": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+export const UpdateKebeleResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string(),
+  "city": zod.string(),
+  "subCity": zod.string().nullish(),
+  "woreda": zod.string().nullish(),
+  "district": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a kebele
+ */
+export const DeleteKebeleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List streets with optional filters
  */
 export const ListStreetsQueryParams = zod.object({
-  "kebele_id": zod.coerce.number().optional()
+  "kebele_id": zod.coerce.number().optional(),
+  "status": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional()
 })
 
 export const ListStreetsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "code": zod.string(),
-  "kebeleId": zod.number()
+  "kebeleId": zod.number(),
+  "kebeleName": zod.string().nullish(),
+  "streetType": zod.string().nullish(),
+  "roadSurface": zod.string().nullish(),
+  "startLat": zod.number().nullish(),
+  "startLng": zod.number().nullish(),
+  "endLat": zod.number().nullish(),
+  "endLng": zod.number().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
 })
 export const ListStreetsResponse = zod.array(ListStreetsResponseItem)
+
+
+/**
+ * @summary Create a new street
+ */
+export const CreateStreetBody = zod.object({
+  "name": zod.string(),
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "streetType": zod.string().nullish(),
+  "roadSurface": zod.string().nullish(),
+  "startLat": zod.number().nullish(),
+  "startLng": zod.number().nullish(),
+  "endLat": zod.number().nullish(),
+  "endLng": zod.number().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+
+/**
+ * @summary Update a street
+ */
+export const UpdateStreetParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateStreetBody = zod.object({
+  "name": zod.string(),
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "streetType": zod.string().nullish(),
+  "roadSurface": zod.string().nullish(),
+  "startLat": zod.number().nullish(),
+  "startLng": zod.number().nullish(),
+  "endLat": zod.number().nullish(),
+  "endLng": zod.number().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+export const UpdateStreetResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "kebeleName": zod.string().nullish(),
+  "streetType": zod.string().nullish(),
+  "roadSurface": zod.string().nullish(),
+  "startLat": zod.number().nullish(),
+  "startLng": zod.number().nullish(),
+  "endLat": zod.number().nullish(),
+  "endLng": zod.number().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a street
+ */
+export const DeleteStreetParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List blocks with optional filters
+ */
+export const ListBlocksQueryParams = zod.object({
+  "kebele_id": zod.coerce.number().optional(),
+  "street_id": zod.coerce.number().optional(),
+  "status": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional()
+})
+
+export const ListBlocksResponseItem = zod.object({
+  "id": zod.number(),
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "kebeleName": zod.string().nullish(),
+  "streetId": zod.number(),
+  "streetName": zod.string().nullish(),
+  "streetCode": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListBlocksResponse = zod.array(ListBlocksResponseItem)
+
+
+/**
+ * @summary Create a new block
+ */
+export const CreateBlockBody = zod.object({
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "streetId": zod.number(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+
+/**
+ * @summary Update a block
+ */
+export const UpdateBlockParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateBlockBody = zod.object({
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "streetId": zod.number(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']).optional()
+})
+
+export const UpdateBlockResponse = zod.object({
+  "id": zod.number(),
+  "code": zod.string(),
+  "kebeleId": zod.number(),
+  "kebeleName": zod.string().nullish(),
+  "streetId": zod.number(),
+  "streetName": zod.string().nullish(),
+  "streetCode": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "status": zod.enum(['active', 'inactive']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a block
+ */
+export const DeleteBlockParams = zod.object({
+  "id": zod.coerce.number()
+})
 
 

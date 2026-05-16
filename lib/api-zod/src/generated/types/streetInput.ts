@@ -5,15 +5,12 @@
  * Jimma City Digital Street Address MIS API
  * OpenAPI spec version: 0.1.0
  */
-import type { StreetStatus } from './streetStatus';
+import type { StreetInputStatus } from './streetInputStatus';
 
-export interface Street {
-  id: number;
+export interface StreetInput {
   name: string;
   code: string;
   kebeleId: number;
-  /** @nullable */
-  kebeleName?: string | null;
   /** @nullable */
   streetType?: string | null;
   /** @nullable */
@@ -28,7 +25,5 @@ export interface Street {
   endLng?: number | null;
   /** @nullable */
   description?: string | null;
-  status: StreetStatus;
-  createdAt: string;
-  updatedAt: string;
+  status?: StreetInputStatus;
 }

@@ -23,6 +23,8 @@ import type {
   ApprovalInput,
   ApprovalRecord,
   AuthResponse,
+  Block,
+  BlockInput,
   CheckDuplicateParams,
   DailyTrend,
   DashboardStats,
@@ -35,6 +37,9 @@ import type {
   HealthStatus,
   Kebele,
   KebeleCount,
+  KebeleInput,
+  ListBlocksParams,
+  ListKebelesParams,
   ListPropertiesParams,
   ListStreetsParams,
   ListUsersParams,
@@ -49,6 +54,7 @@ import type {
   ReportResponse,
   RoleItem,
   Street,
+  StreetInput,
   User,
   UserInput,
   UserStatusUpdate,
@@ -2278,20 +2284,27 @@ export function useGetEnumeratorPerformance<TData = Awaited<ReturnType<typeof ge
 
 
 
-export const getListKebelesUrl = () => {
+export const getListKebelesUrl = (params?: ListKebelesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/kebeles`
+  return stringifiedParams.length > 0 ? `/api/kebeles?${stringifiedParams}` : `/api/kebeles`
 }
 
 /**
  * @summary List all kebeles
  */
-export const listKebeles = async ( options?: RequestInit): Promise<Kebele[]> => {
+export const listKebeles = async (params?: ListKebelesParams, options?: RequestInit): Promise<Kebele[]> => {
 
-  return customFetch<Kebele[]>(getListKebelesUrl(),
+  return customFetch<Kebele[]>(getListKebelesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -2304,23 +2317,23 @@ export const listKebeles = async ( options?: RequestInit): Promise<Kebele[]> => 
 
 
 
-export const getListKebelesQueryKey = () => {
+export const getListKebelesQueryKey = (params?: ListKebelesParams,) => {
     return [
-    `/api/kebeles`
+    `/api/kebeles`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListKebelesQueryOptions = <TData = Awaited<ReturnType<typeof listKebeles>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKebeles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListKebelesQueryOptions = <TData = Awaited<ReturnType<typeof listKebeles>>, TError = ErrorType<unknown>>(params?: ListKebelesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKebeles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListKebelesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListKebelesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listKebeles>>> = ({ signal }) => listKebeles({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listKebeles>>> = ({ signal }) => listKebeles(params, { signal, ...requestOptions });
 
 
 
@@ -2338,11 +2351,11 @@ export type ListKebelesQueryError = ErrorType<unknown>
  */
 
 export function useListKebeles<TData = Awaited<ReturnType<typeof listKebeles>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKebeles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListKebelesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listKebeles>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListKebelesQueryOptions(options)
+  const queryOptions = getListKebelesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -2354,6 +2367,219 @@ export function useListKebeles<TData = Awaited<ReturnType<typeof listKebeles>>, 
 
 
 
+
+export const getCreateKebeleUrl = () => {
+
+
+
+
+  return `/api/kebeles`
+}
+
+/**
+ * @summary Create a new kebele
+ */
+export const createKebele = async (kebeleInput: KebeleInput, options?: RequestInit): Promise<Kebele> => {
+
+  return customFetch<Kebele>(getCreateKebeleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      kebeleInput,)
+  }
+);}
+
+
+
+
+export const getCreateKebeleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createKebele>>, TError,{data: BodyType<KebeleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createKebele>>, TError,{data: BodyType<KebeleInput>}, TContext> => {
+
+const mutationKey = ['createKebele'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createKebele>>, {data: BodyType<KebeleInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createKebele(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateKebeleMutationResult = NonNullable<Awaited<ReturnType<typeof createKebele>>>
+    export type CreateKebeleMutationBody = BodyType<KebeleInput>
+    export type CreateKebeleMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a new kebele
+ */
+export const useCreateKebele = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createKebele>>, TError,{data: BodyType<KebeleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createKebele>>,
+        TError,
+        {data: BodyType<KebeleInput>},
+        TContext
+      > => {
+      return useMutation(getCreateKebeleMutationOptions(options));
+    }
+
+export const getUpdateKebeleUrl = (id: number,) => {
+
+
+
+
+  return `/api/kebeles/${id}`
+}
+
+/**
+ * @summary Update a kebele
+ */
+export const updateKebele = async (id: number,
+    kebeleInput: KebeleInput, options?: RequestInit): Promise<Kebele> => {
+
+  return customFetch<Kebele>(getUpdateKebeleUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      kebeleInput,)
+  }
+);}
+
+
+
+
+export const getUpdateKebeleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateKebele>>, TError,{id: number;data: BodyType<KebeleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateKebele>>, TError,{id: number;data: BodyType<KebeleInput>}, TContext> => {
+
+const mutationKey = ['updateKebele'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateKebele>>, {id: number;data: BodyType<KebeleInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateKebele(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateKebeleMutationResult = NonNullable<Awaited<ReturnType<typeof updateKebele>>>
+    export type UpdateKebeleMutationBody = BodyType<KebeleInput>
+    export type UpdateKebeleMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a kebele
+ */
+export const useUpdateKebele = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateKebele>>, TError,{id: number;data: BodyType<KebeleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateKebele>>,
+        TError,
+        {id: number;data: BodyType<KebeleInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateKebeleMutationOptions(options));
+    }
+
+export const getDeleteKebeleUrl = (id: number,) => {
+
+
+
+
+  return `/api/kebeles/${id}`
+}
+
+/**
+ * @summary Delete a kebele
+ */
+export const deleteKebele = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteKebeleUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteKebeleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteKebele>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteKebele>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteKebele'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteKebele>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteKebele(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteKebeleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteKebele>>>
+
+    export type DeleteKebeleMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a kebele
+ */
+export const useDeleteKebele = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteKebele>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteKebele>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteKebeleMutationOptions(options));
+    }
 
 export const getListStreetsUrl = (params?: ListStreetsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -2371,7 +2597,7 @@ export const getListStreetsUrl = (params?: ListStreetsParams,) => {
 }
 
 /**
- * @summary List streets with optional kebele filter
+ * @summary List streets with optional filters
  */
 export const listStreets = async (params?: ListStreetsParams, options?: RequestInit): Promise<Street[]> => {
 
@@ -2418,7 +2644,7 @@ export type ListStreetsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List streets with optional kebele filter
+ * @summary List streets with optional filters
  */
 
 export function useListStreets<TData = Awaited<ReturnType<typeof listStreets>>, TError = ErrorType<unknown>>(
@@ -2438,4 +2664,514 @@ export function useListStreets<TData = Awaited<ReturnType<typeof listStreets>>, 
 
 
 
+
+export const getCreateStreetUrl = () => {
+
+
+
+
+  return `/api/streets`
+}
+
+/**
+ * @summary Create a new street
+ */
+export const createStreet = async (streetInput: StreetInput, options?: RequestInit): Promise<Street> => {
+
+  return customFetch<Street>(getCreateStreetUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      streetInput,)
+  }
+);}
+
+
+
+
+export const getCreateStreetMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStreet>>, TError,{data: BodyType<StreetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createStreet>>, TError,{data: BodyType<StreetInput>}, TContext> => {
+
+const mutationKey = ['createStreet'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createStreet>>, {data: BodyType<StreetInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createStreet(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateStreetMutationResult = NonNullable<Awaited<ReturnType<typeof createStreet>>>
+    export type CreateStreetMutationBody = BodyType<StreetInput>
+    export type CreateStreetMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a new street
+ */
+export const useCreateStreet = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStreet>>, TError,{data: BodyType<StreetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createStreet>>,
+        TError,
+        {data: BodyType<StreetInput>},
+        TContext
+      > => {
+      return useMutation(getCreateStreetMutationOptions(options));
+    }
+
+export const getUpdateStreetUrl = (id: number,) => {
+
+
+
+
+  return `/api/streets/${id}`
+}
+
+/**
+ * @summary Update a street
+ */
+export const updateStreet = async (id: number,
+    streetInput: StreetInput, options?: RequestInit): Promise<Street> => {
+
+  return customFetch<Street>(getUpdateStreetUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      streetInput,)
+  }
+);}
+
+
+
+
+export const getUpdateStreetMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStreet>>, TError,{id: number;data: BodyType<StreetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStreet>>, TError,{id: number;data: BodyType<StreetInput>}, TContext> => {
+
+const mutationKey = ['updateStreet'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStreet>>, {id: number;data: BodyType<StreetInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateStreet(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStreetMutationResult = NonNullable<Awaited<ReturnType<typeof updateStreet>>>
+    export type UpdateStreetMutationBody = BodyType<StreetInput>
+    export type UpdateStreetMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a street
+ */
+export const useUpdateStreet = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStreet>>, TError,{id: number;data: BodyType<StreetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateStreet>>,
+        TError,
+        {id: number;data: BodyType<StreetInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateStreetMutationOptions(options));
+    }
+
+export const getDeleteStreetUrl = (id: number,) => {
+
+
+
+
+  return `/api/streets/${id}`
+}
+
+/**
+ * @summary Delete a street
+ */
+export const deleteStreet = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteStreetUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteStreetMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStreet>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteStreet>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteStreet'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStreet>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteStreet(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteStreetMutationResult = NonNullable<Awaited<ReturnType<typeof deleteStreet>>>
+
+    export type DeleteStreetMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a street
+ */
+export const useDeleteStreet = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStreet>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteStreet>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteStreetMutationOptions(options));
+    }
+
+export const getListBlocksUrl = (params?: ListBlocksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/blocks?${stringifiedParams}` : `/api/blocks`
+}
+
+/**
+ * @summary List blocks with optional filters
+ */
+export const listBlocks = async (params?: ListBlocksParams, options?: RequestInit): Promise<Block[]> => {
+
+  return customFetch<Block[]>(getListBlocksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBlocksQueryKey = (params?: ListBlocksParams,) => {
+    return [
+    `/api/blocks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListBlocksQueryOptions = <TData = Awaited<ReturnType<typeof listBlocks>>, TError = ErrorType<unknown>>(params?: ListBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBlocksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBlocks>>> = ({ signal }) => listBlocks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListBlocksQueryResult = NonNullable<Awaited<ReturnType<typeof listBlocks>>>
+export type ListBlocksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List blocks with optional filters
+ */
+
+export function useListBlocks<TData = Awaited<ReturnType<typeof listBlocks>>, TError = ErrorType<unknown>>(
+ params?: ListBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListBlocksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateBlockUrl = () => {
+
+
+
+
+  return `/api/blocks`
+}
+
+/**
+ * @summary Create a new block
+ */
+export const createBlock = async (blockInput: BlockInput, options?: RequestInit): Promise<Block> => {
+
+  return customFetch<Block>(getCreateBlockUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      blockInput,)
+  }
+);}
+
+
+
+
+export const getCreateBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBlock>>, TError,{data: BodyType<BlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBlock>>, TError,{data: BodyType<BlockInput>}, TContext> => {
+
+const mutationKey = ['createBlock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBlock>>, {data: BodyType<BlockInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBlock(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBlockMutationResult = NonNullable<Awaited<ReturnType<typeof createBlock>>>
+    export type CreateBlockMutationBody = BodyType<BlockInput>
+    export type CreateBlockMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a new block
+ */
+export const useCreateBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBlock>>, TError,{data: BodyType<BlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBlock>>,
+        TError,
+        {data: BodyType<BlockInput>},
+        TContext
+      > => {
+      return useMutation(getCreateBlockMutationOptions(options));
+    }
+
+export const getUpdateBlockUrl = (id: number,) => {
+
+
+
+
+  return `/api/blocks/${id}`
+}
+
+/**
+ * @summary Update a block
+ */
+export const updateBlock = async (id: number,
+    blockInput: BlockInput, options?: RequestInit): Promise<Block> => {
+
+  return customFetch<Block>(getUpdateBlockUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      blockInput,)
+  }
+);}
+
+
+
+
+export const getUpdateBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBlock>>, TError,{id: number;data: BodyType<BlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateBlock>>, TError,{id: number;data: BodyType<BlockInput>}, TContext> => {
+
+const mutationKey = ['updateBlock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBlock>>, {id: number;data: BodyType<BlockInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateBlock(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateBlockMutationResult = NonNullable<Awaited<ReturnType<typeof updateBlock>>>
+    export type UpdateBlockMutationBody = BodyType<BlockInput>
+    export type UpdateBlockMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a block
+ */
+export const useUpdateBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBlock>>, TError,{id: number;data: BodyType<BlockInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateBlock>>,
+        TError,
+        {id: number;data: BodyType<BlockInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateBlockMutationOptions(options));
+    }
+
+export const getDeleteBlockUrl = (id: number,) => {
+
+
+
+
+  return `/api/blocks/${id}`
+}
+
+/**
+ * @summary Delete a block
+ */
+export const deleteBlock = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteBlockUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteBlockMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBlock>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBlock>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteBlock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBlock>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteBlock(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBlockMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBlock>>>
+
+    export type DeleteBlockMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a block
+ */
+export const useDeleteBlock = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBlock>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBlock>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteBlockMutationOptions(options));
+    }
 

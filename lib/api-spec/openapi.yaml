@@ -17,6 +17,7 @@ tags:
   - name: reports
   - name: kebeles
   - name: streets
+  - name: blocks
 
 paths:
   /healthz:
@@ -680,6 +681,15 @@ paths:
       operationId: listKebeles
       tags: [kebeles]
       summary: List all kebeles
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: List of kebeles
@@ -689,17 +699,90 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Kebele"
+    post:
+      operationId: createKebele
+      tags: [kebeles]
+      summary: Create a new kebele
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KebeleInput"
+      responses:
+        "201":
+          description: Created kebele
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kebele"
+        "409":
+          description: Kebele code already exists
+
+  /kebeles/{id}:
+    put:
+      operationId: updateKebele
+      tags: [kebeles]
+      summary: Update a kebele
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KebeleInput"
+      responses:
+        "200":
+          description: Updated kebele
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kebele"
+        "404":
+          description: Kebele not found
+        "409":
+          description: Kebele code already exists
+    delete:
+      operationId: deleteKebele
+      tags: [kebeles]
+      summary: Delete a kebele
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Cannot delete — in use by properties
+        "404":
+          description: Kebele not found
 
   /streets:
     get:
       operationId: listStreets
       tags: [streets]
-      summary: List streets with optional kebele filter
+      summary: List streets with optional filters
       parameters:
         - name: kebele_id
           in: query
           schema:
             type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: List of streets
@@ -709,6 +792,164 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Street"
+    post:
+      operationId: createStreet
+      tags: [streets]
+      summary: Create a new street
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreetInput"
+      responses:
+        "201":
+          description: Created street
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Street"
+        "409":
+          description: Street code already exists within kebele
+
+  /streets/{id}:
+    put:
+      operationId: updateStreet
+      tags: [streets]
+      summary: Update a street
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreetInput"
+      responses:
+        "200":
+          description: Updated street
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Street"
+        "404":
+          description: Street not found
+    delete:
+      operationId: deleteStreet
+      tags: [streets]
+      summary: Delete a street
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Cannot delete — in use by properties
+        "404":
+          description: Street not found
+
+  /blocks:
+    get:
+      operationId: listBlocks
+      tags: [blocks]
+      summary: List blocks with optional filters
+      parameters:
+        - name: kebele_id
+          in: query
+          schema:
+            type: integer
+        - name: street_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Block"
+    post:
+      operationId: createBlock
+      tags: [blocks]
+      summary: Create a new block
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockInput"
+      responses:
+        "201":
+          description: Created block
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+        "409":
+          description: Block code already exists within street
+
+  /blocks/{id}:
+    put:
+      operationId: updateBlock
+      tags: [blocks]
+      summary: Update a block
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockInput"
+      responses:
+        "200":
+          description: Updated block
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+        "404":
+          description: Block not found
+    delete:
+      operationId: deleteBlock
+      tags: [blocks]
+      summary: Delete a block
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "400":
+          description: Cannot delete — in use by properties
+        "404":
+          description: Block not found
 
 components:
   schemas:
@@ -1213,7 +1454,7 @@ components:
 
     Kebele:
       type: object
-      required: [id, name, code]
+      required: [id, name, code, city, status, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1221,12 +1462,45 @@ components:
           type: string
         code:
           type: string
+        city:
+          type: string
+        subCity:
+          type: ["string", "null"]
+        woreda:
+          type: ["string", "null"]
         district:
           type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    KebeleInput:
+      type: object
+      required: [name, code]
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        city:
+          type: string
+        subCity:
+          type: ["string", "null"]
+        woreda:
+          type: ["string", "null"]
+        district:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
 
     Street:
       type: object
-      required: [id, name, code, kebeleId]
+      required: [id, name, code, kebeleId, status, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1236,3 +1510,98 @@ components:
           type: string
         kebeleId:
           type: integer
+        kebeleName:
+          type: ["string", "null"]
+        streetType:
+          type: ["string", "null"]
+        roadSurface:
+          type: ["string", "null"]
+        startLat:
+          type: ["number", "null"]
+        startLng:
+          type: ["number", "null"]
+        endLat:
+          type: ["number", "null"]
+        endLng:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    StreetInput:
+      type: object
+      required: [name, code, kebeleId]
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        kebeleId:
+          type: integer
+        streetType:
+          type: ["string", "null"]
+        roadSurface:
+          type: ["string", "null"]
+        startLat:
+          type: ["number", "null"]
+        startLng:
+          type: ["number", "null"]
+        endLat:
+          type: ["number", "null"]
+        endLng:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    Block:
+      type: object
+      required: [id, code, kebeleId, streetId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        kebeleId:
+          type: integer
+        kebeleName:
+          type: ["string", "null"]
+        streetId:
+          type: integer
+        streetName:
+          type: ["string", "null"]
+        streetCode:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    BlockInput:
+      type: object
+      required: [code, kebeleId, streetId]
+      properties:
+        code:
+          type: string
+        kebeleId:
+          type: integer
+        streetId:
+          type: integer
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]

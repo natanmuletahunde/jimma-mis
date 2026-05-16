@@ -402,19 +402,155 @@ export interface EnumeratorPerformance {
   missingGps: number;
 }
 
+export type KebeleStatus = typeof KebeleStatus[keyof typeof KebeleStatus];
+
+
+export const KebeleStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
 export interface Kebele {
   id: number;
   name: string;
   code: string;
+  city: string;
+  /** @nullable */
+  subCity?: string | null;
+  /** @nullable */
+  woreda?: string | null;
   /** @nullable */
   district?: string | null;
+  status: KebeleStatus;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export type KebeleInputStatus = typeof KebeleInputStatus[keyof typeof KebeleInputStatus];
+
+
+export const KebeleInputStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
+export interface KebeleInput {
+  name: string;
+  code: string;
+  city?: string;
+  /** @nullable */
+  subCity?: string | null;
+  /** @nullable */
+  woreda?: string | null;
+  /** @nullable */
+  district?: string | null;
+  status?: KebeleInputStatus;
+}
+
+export type StreetStatus = typeof StreetStatus[keyof typeof StreetStatus];
+
+
+export const StreetStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
 
 export interface Street {
   id: number;
   name: string;
   code: string;
   kebeleId: number;
+  /** @nullable */
+  kebeleName?: string | null;
+  /** @nullable */
+  streetType?: string | null;
+  /** @nullable */
+  roadSurface?: string | null;
+  /** @nullable */
+  startLat?: number | null;
+  /** @nullable */
+  startLng?: number | null;
+  /** @nullable */
+  endLat?: number | null;
+  /** @nullable */
+  endLng?: number | null;
+  /** @nullable */
+  description?: string | null;
+  status: StreetStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StreetInputStatus = typeof StreetInputStatus[keyof typeof StreetInputStatus];
+
+
+export const StreetInputStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
+export interface StreetInput {
+  name: string;
+  code: string;
+  kebeleId: number;
+  /** @nullable */
+  streetType?: string | null;
+  /** @nullable */
+  roadSurface?: string | null;
+  /** @nullable */
+  startLat?: number | null;
+  /** @nullable */
+  startLng?: number | null;
+  /** @nullable */
+  endLat?: number | null;
+  /** @nullable */
+  endLng?: number | null;
+  /** @nullable */
+  description?: string | null;
+  status?: StreetInputStatus;
+}
+
+export type BlockStatus = typeof BlockStatus[keyof typeof BlockStatus];
+
+
+export const BlockStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
+export interface Block {
+  id: number;
+  code: string;
+  kebeleId: number;
+  /** @nullable */
+  kebeleName?: string | null;
+  streetId: number;
+  /** @nullable */
+  streetName?: string | null;
+  /** @nullable */
+  streetCode?: string | null;
+  /** @nullable */
+  description?: string | null;
+  status: BlockStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BlockInputStatus = typeof BlockInputStatus[keyof typeof BlockInputStatus];
+
+
+export const BlockInputStatus = {
+  active: 'active',
+  inactive: 'inactive',
+} as const;
+
+export interface BlockInput {
+  code: string;
+  kebeleId: number;
+  streetId: number;
+  /** @nullable */
+  description?: string | null;
+  status?: BlockInputStatus;
 }
 
 export type ListUsersParams = {
@@ -475,7 +611,21 @@ street_name?: string;
 enumerator_name?: string;
 };
 
+export type ListKebelesParams = {
+status?: string;
+search?: string;
+};
+
 export type ListStreetsParams = {
 kebele_id?: number;
+status?: string;
+search?: string;
+};
+
+export type ListBlocksParams = {
+kebele_id?: number;
+street_id?: number;
+status?: string;
+search?: string;
 };
 

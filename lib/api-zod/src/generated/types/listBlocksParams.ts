@@ -6,8 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListStreetsParams = {
+export type ListBlocksParams = {
 kebele_id?: number;
+street_id?: number;
 status?: string;
 search?: string;
 };

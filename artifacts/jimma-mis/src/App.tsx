@@ -15,6 +15,9 @@ import PropertyShow from "@/pages/properties/[id]";
 import MapView from "@/pages/map";
 import Reports from "@/pages/reports";
 import Users from "@/pages/users";
+import LocationsSetup from "@/pages/setup/locations";
+import StreetsSetup from "@/pages/setup/streets";
+import BlocksSetup from "@/pages/setup/blocks";
 
 import 'leaflet/dist/leaflet.css';
 
@@ -41,6 +44,9 @@ function ProtectedRoutes() {
       <Route path="/map" component={MapView} />
       <Route path="/reports" component={Reports} />
       <Route path="/users" component={Users} />
+      <Route path="/setup/locations" component={LocationsSetup} />
+      <Route path="/setup/streets" component={StreetsSetup} />
+      <Route path="/setup/blocks" component={BlocksSetup} />
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>

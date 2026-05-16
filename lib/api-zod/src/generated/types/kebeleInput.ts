@@ -5,20 +5,17 @@
  * Jimma City Digital Street Address MIS API
  * OpenAPI spec version: 0.1.0
  */
-import type { KebeleStatus } from './kebeleStatus';
+import type { KebeleInputStatus } from './kebeleInputStatus';
 
-export interface Kebele {
-  id: number;
+export interface KebeleInput {
   name: string;
   code: string;
-  city: string;
+  city?: string;
   /** @nullable */
   subCity?: string | null;
   /** @nullable */
   woreda?: string | null;
   /** @nullable */
   district?: string | null;
-  status: KebeleStatus;
-  createdAt: string;
-  updatedAt: string;
+  status?: KebeleInputStatus;
 }

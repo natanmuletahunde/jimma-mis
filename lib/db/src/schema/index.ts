@@ -1,5 +1,6 @@
 export * from "./kebeles";
 export * from "./streets";
+export * from "./blocks";
 export * from "./users";
 export * from "./properties";
 export * from "./approvals";

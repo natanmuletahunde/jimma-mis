@@ -9,7 +9,9 @@ import {
   useCheckDuplicate,
   useListKebeles,
   useListStreets,
+  useListBlocks,
   getListStreetsQueryKey,
+  getListBlocksQueryKey,
   getCheckDuplicateQueryKey,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -89,16 +91,16 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   mixed: "Mixed Use",
 };
 
-function AddressPreview({ kebele, streetName, blockCode, houseNumber }: {
-  kebele?: string;
-  streetName?: string;
+function AddressPreview({ kebeleCode, streetCode, blockCode, houseNumber }: {
+  kebeleCode?: string;
+  streetCode?: string;
   blockCode?: string;
   houseNumber?: string;
 }) {
   const parts = [
     "JIM",
-    kebele ? `KB${kebele.toUpperCase().replace(/\s/g, "")}` : "KB??",
-    streetName ? `ST${streetName.toUpperCase().replace(/\s/g, "").slice(0, 8)}` : "ST??",
+    kebeleCode ? `KB${kebeleCode.toUpperCase().replace(/\s/g, "")}` : "KB??",
+    streetCode ? `ST${streetCode.toUpperCase().replace(/\s/g, "")}` : "ST??",
     blockCode ? `BL${blockCode.toUpperCase()}` : "BL??",
     houseNumber ? `HN${houseNumber}` : "HN??",
   ];
@@ -140,6 +142,8 @@ export default function NewProperty() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedStreetId, setSelectedStreetId] = useState<number | undefined>(undefined);
+  const [selectedStreetCode, setSelectedStreetCode] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: kebeles = [], isLoading: kebelesLoading } = useListKebeles();
@@ -166,6 +170,11 @@ export default function NewProperty() {
   const { data: streets = [], isLoading: streetsLoading } = useListStreets(
     { kebele_id: watchedKebeleId },
     { query: { queryKey: getListStreetsQueryKey({ kebele_id: watchedKebeleId }), enabled: !!watchedKebeleId } }
+  );
+
+  const { data: blocks = [], isLoading: blocksLoading } = useListBlocks(
+    { street_id: selectedStreetId },
+    { query: { queryKey: getListBlocksQueryKey({ street_id: selectedStreetId }), enabled: !!selectedStreetId } }
   );
 
   const hasGps = !!watchedLat && !!watchedLng;
@@ -229,6 +238,9 @@ export default function NewProperty() {
     form.setValue("kebeleId", kebele.id);
     form.setValue("kebele", kebele.code);
     form.setValue("streetName", "");
+    form.setValue("blockCode", "");
+    setSelectedStreetId(undefined);
+    setSelectedStreetCode(undefined);
   };
 
   const onStreetChange = (streetId: string) => {
@@ -236,6 +248,9 @@ export default function NewProperty() {
     const street = streets.find((s) => s.id === id);
     if (!street) return;
     form.setValue("streetName", street.name);
+    form.setValue("blockCode", "");
+    setSelectedStreetId(street.id);
+    setSelectedStreetCode(street.code);
   };
 
   const handleSaveDraft = async (data: PropertyFormValues) => {
@@ -408,12 +423,27 @@ export default function NewProperty() {
                 <FormField
                   control={form.control}
                   name="blockCode"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
-                      <FormLabel>Block Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. BL01" {...field} value={field.value ?? ""} />
-                      </FormControl>
+                      <FormLabel>Block</FormLabel>
+                      <Select
+                        onValueChange={(val) => form.setValue("blockCode", val)}
+                        disabled={!selectedStreetId || blocksLoading}
+                        value={watchedBlockCode ?? ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={!selectedStreetId ? "Select street first" : blocksLoading ? "Loading…" : blocks.length === 0 ? "No blocks available" : "Select block"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(blocks as Array<{ id: number; code: string; description: string | null }>).map((b) => (
+                            <SelectItem key={b.id} value={b.code}>
+                              {b.code}{b.description ? ` — ${b.description}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -498,8 +528,8 @@ export default function NewProperty() {
               {/* Address preview */}
               {(watchedKebele || watchedStreetName) && (
                 <AddressPreview
-                  kebele={watchedKebele}
-                  streetName={watchedStreetName}
+                  kebeleCode={watchedKebele}
+                  streetCode={selectedStreetCode}
                   blockCode={watchedBlockCode}
                   houseNumber={watchedHouseNumber}
                 />
