@@ -1,0 +1,150 @@
+Now continue from the existing working GIS Map Dashboard module.
+
+Your task is to build the Reports and Export module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Report APIs
+
+Create or fix these endpoints:
+
+GET /api/reports/properties
+GET /api/reports/approved-addresses
+GET /api/reports/commercial
+GET /api/reports/residential
+GET /api/reports/missing-gps
+GET /api/reports/rejected
+GET /api/reports/enumerator-performance
+GET /api/reports/export/csv
+
+2. Report Filters
+
+All report APIs should support filters:
+
+- start_date
+- end_date
+- kebele
+- street_name
+- property_type
+- status
+- created_by
+
+3. Reports Page
+
+Create or improve route:
+
+/reports
+
+Add report tabs:
+
+1. All Property Registry
+2. Approved Address Registry
+3. Commercial Properties
+4. Residential Properties
+5. Missing GPS
+6. Rejected Records
+7. Enumerator Performance
+
+4. Report Table Columns
+
+For property-based reports, show:
+
+- Address Code
+- Owner Name
+- Owner Phone
+- Property Type
+- Kebele
+- Street Name
+- Block Code
+- House Number
+- Status
+- Created By
+- Created Date
+
+For Enumerator Performance report, show:
+
+- Enumerator Name
+- Assigned Kebele
+- Total Registered
+- Draft
+- Submitted
+- Verified
+- Approved
+- Rejected
+- Missing GPS
+
+5. Search and Filter Panel
+
+Add filters at the top:
+
+- Date From
+- Date To
+- Kebele
+- Street
+- Property Type
+- Status
+- Enumerator
+
+Buttons:
+- Apply Filter
+- Reset
+- Export CSV
+- Print
+
+6. CSV Export
+
+Export the currently filtered report to CSV.
+
+The CSV file should include the same columns shown in the report table.
+
+7. Print Report
+
+Add a print-friendly report view.
+
+When user clicks Print:
+- hide sidebar
+- hide buttons
+- show report title
+- show generated date
+- show filter summary
+- print table clearly
+
+8. Role Access
+
+Admin and City Officer:
+- can view and export all reports
+
+Kebele Officer:
+- can view reports only for assigned kebele
+
+Enumerator:
+- can view only own registration performance and own submitted properties
+
+Viewer:
+- can view reports but cannot export unless allowed
+
+9. Dashboard Link
+
+Add a Reports menu item in the sidebar if it does not already exist.
+
+10. Final Check
+
+After implementation, test:
+
+- reports page loads
+- each report tab loads data
+- filters work
+- reset works
+- CSV export works
+- print view works
+- role-based report access works
+- report tables are responsive
+- no API errors
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues

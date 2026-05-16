@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import {
   useGetMapProperties,
@@ -166,9 +166,13 @@ export default function MapView() {
     }).addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
+    // Invalidate size after the flex layout has fully settled
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 400);
     return () => {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
+      markersRef.current = null;
     };
   }, []);
 
@@ -228,16 +232,15 @@ export default function MapView() {
     });
   }, [properties]);
 
-  // Force map resize when it becomes visible
-  const resizeMap = useCallback(() => {
-    setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100);
-  }, []);
+  // Revalidate map size on window resize
   useEffect(() => {
-    resizeMap();
-  }, [resizeMap]);
+    const handler = () => mapInstanceRef.current?.invalidateSize();
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-5 h-full">
+    <div className="flex flex-col gap-5 pb-6">
       {/* Page header */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -364,12 +367,12 @@ export default function MapView() {
         <LegendDot color="#6b7280" label="Other" />
       </div>
 
-      {/* Map */}
-      <Card className="overflow-hidden" style={{ minHeight: 480 }}>
+      {/* Map — no overflow-hidden so Leaflet popups are not clipped */}
+      <Card>
         <div
           ref={mapRef}
-          className="w-full"
-          style={{ height: "calc(60vh)", minHeight: 400, zIndex: 0 }}
+          className="w-full rounded-xl"
+          style={{ height: "60vh", minHeight: 420 }}
         />
       </Card>
 
