@@ -182,12 +182,12 @@ router.delete("/kebeles/:id", requireAuth, requireRole("admin"), async (req, res
   const [existing] = await db.select().from(kebelesTable).where(eq(kebelesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Kebele not found" }); return; }
 
+  const [streetInUse] = await db.select({ id: streetsTable.id }).from(streetsTable).where(eq(streetsTable.kebeleId, id)).limit(1);
+  if (streetInUse) { res.status(400).json({ error: "Cannot delete: this kebele still has streets. Remove all streets first." }); return; }
+
   const [inUse] = await db.select({ id: propertiesTable.id }).from(propertiesTable)
     .where(or(eq(propertiesTable.kebele, existing.code), eq(propertiesTable.kebele, existing.name))).limit(1);
-  if (inUse) { res.status(400).json({ error: "Cannot delete: kebele is referenced by existing properties" }); return; }
-
-  const [streetInUse] = await db.select({ id: streetsTable.id }).from(streetsTable).where(eq(streetsTable.kebeleId, id)).limit(1);
-  if (streetInUse) { res.status(400).json({ error: "Cannot delete: kebele has streets assigned to it" }); return; }
+  if (inUse) { res.status(400).json({ error: "Cannot delete: this kebele is referenced by existing properties." }); return; }
 
   await db.delete(kebelesTable).where(eq(kebelesTable.id, id));
   await writeAudit(req.user!.userId, "delete_kebele", "kebele", id, `Deleted kebele ${existing.name} (${existing.code})`);
@@ -304,12 +304,12 @@ router.delete("/streets/:id", requireAuth, requireRole("admin"), async (req, res
   const [existing] = await db.select().from(streetsTable).where(eq(streetsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Street not found" }); return; }
 
+  const [blockInUse] = await db.select({ id: blocksTable.id }).from(blocksTable).where(eq(blocksTable.streetId, id)).limit(1);
+  if (blockInUse) { res.status(400).json({ error: "Cannot delete: this street still has blocks. Remove all blocks first." }); return; }
+
   const [inUse] = await db.select({ id: propertiesTable.id }).from(propertiesTable)
     .where(or(eq(propertiesTable.streetName, existing.name), eq(propertiesTable.streetName, existing.code))).limit(1);
-  if (inUse) { res.status(400).json({ error: "Cannot delete: street is referenced by existing properties" }); return; }
-
-  const [blockInUse] = await db.select({ id: blocksTable.id }).from(blocksTable).where(eq(blocksTable.streetId, id)).limit(1);
-  if (blockInUse) { res.status(400).json({ error: "Cannot delete: street has blocks assigned to it" }); return; }
+  if (inUse) { res.status(400).json({ error: "Cannot delete: this street is referenced by existing properties." }); return; }
 
   await db.delete(streetsTable).where(eq(streetsTable.id, id));
   await writeAudit(req.user!.userId, "delete_street", "street", id, `Deleted street ${existing.name} (${existing.code})`);

@@ -1,0 +1,135 @@
+Now continue from the existing working Location, Street, and Address Setup module.
+
+Your task is to build the Photo Upload, File Management, and Property Media module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend File Upload APIs
+
+Create or fix these endpoints:
+
+POST /api/uploads/property-photo
+POST /api/properties/:id/photos
+GET /api/properties/:id/photos
+DELETE /api/properties/:id/photos/:photoId
+
+2. Upload Requirements
+
+Use multer or the existing upload middleware.
+
+Allow only:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Maximum file size:
+
+- 5 MB per image
+
+3. Upload Folder Structure
+
+Store files under:
+
+uploads/properties/
+
+File naming format:
+
+property_{propertyId}_{timestamp}.{extension}
+
+If property ID is not available during draft creation, use:
+
+temp_{userId}_{timestamp}.{extension}
+
+4. Property Photo Types
+
+Support:
+
+- Front view photo
+- Side view photo
+- Business sign photo
+- Document/photo evidence
+- Other
+
+5. Database Integration
+
+Update or use property_photos table with:
+
+- id
+- property_id
+- file_path
+- file_name
+- file_type
+- photo_category
+- uploaded_by
+- created_at
+
+6. Frontend Photo Upload
+
+Update property registration and property detail pages.
+
+Add:
+
+- image upload input
+- image preview before upload
+- photo category selector
+- upload progress indicator
+- remove photo option before saving
+- photo gallery on property detail page
+
+7. Submission Validation
+
+Before Submit for Verification:
+
+- require at least one front view photo
+- require GPS latitude and longitude
+- block submission if photo or GPS is missing
+
+8. Security
+
+Make uploaded files accessible only through safe static route:
+
+/uploads/properties/
+
+Do not expose server folders directly.
+
+9. Role Rules
+
+Enumerator:
+
+- can upload photos for own Draft or Rejected properties
+
+Kebele Officer, City Officer, Admin:
+
+- can view photos
+
+Admin:
+
+- can delete invalid photos
+
+Viewer:
+
+- can view photos only
+
+10. Final Check
+
+After implementation, test:
+
+- upload property image
+- preview image
+- save image path
+- view image in property detail
+- delete image as Admin
+- block unsupported file types
+- block files larger than 5 MB
+- require front view photo before submit
+- mobile upload works
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues

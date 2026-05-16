@@ -91,18 +91,22 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   mixed: "Mixed Use",
 };
 
-function AddressPreview({ kebeleCode, streetCode, blockCode, houseNumber }: {
+function deriveCode(raw: string, len: number) {
+  return raw.toUpperCase().replace(/[^A-Z0-9]/g, "").substring(0, len);
+}
+
+function AddressPreview({ kebeleCode, streetName, blockCode, houseNumber }: {
   kebeleCode?: string;
-  streetCode?: string;
+  streetName?: string;
   blockCode?: string;
   houseNumber?: string;
 }) {
   const parts = [
     "JIM",
-    kebeleCode ? `KB${kebeleCode.toUpperCase().replace(/\s/g, "")}` : "KB??",
-    streetCode ? `ST${streetCode.toUpperCase().replace(/\s/g, "")}` : "ST??",
-    blockCode ? `BL${blockCode.toUpperCase()}` : "BL??",
-    houseNumber ? `HN${houseNumber}` : "HN??",
+    kebeleCode ? `KB${deriveCode(kebeleCode, 6)}` : "KB??",
+    streetName ? `ST${deriveCode(streetName, 6)}` : "ST??",
+    blockCode ? `BL${blockCode.toUpperCase().replace(/[^A-Z0-9]/g, "")}` : "BL??",
+    houseNumber ? `HN${houseNumber.replace(/[^A-Z0-9]/gi, "")}` : "HN??",
   ];
   return (
     <div className="rounded-lg border bg-muted/40 px-4 py-3">
@@ -143,7 +147,6 @@ export default function NewProperty() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedStreetId, setSelectedStreetId] = useState<number | undefined>(undefined);
-  const [selectedStreetCode, setSelectedStreetCode] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: kebeles = [], isLoading: kebelesLoading } = useListKebeles();
@@ -240,7 +243,6 @@ export default function NewProperty() {
     form.setValue("streetName", "");
     form.setValue("blockCode", "");
     setSelectedStreetId(undefined);
-    setSelectedStreetCode(undefined);
   };
 
   const onStreetChange = (streetId: string) => {
@@ -250,7 +252,6 @@ export default function NewProperty() {
     form.setValue("streetName", street.name);
     form.setValue("blockCode", "");
     setSelectedStreetId(street.id);
-    setSelectedStreetCode(street.code);
   };
 
   const handleSaveDraft = async (data: PropertyFormValues) => {
@@ -529,7 +530,7 @@ export default function NewProperty() {
               {(watchedKebele || watchedStreetName) && (
                 <AddressPreview
                   kebeleCode={watchedKebele}
-                  streetCode={selectedStreetCode}
+                  streetName={watchedStreetName}
                   blockCode={watchedBlockCode}
                   houseNumber={watchedHouseNumber}
                 />
