@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Jimma City Digital Street Address MIS API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: users
+  - name: properties
+  - name: approvals
+  - name: dashboard
+  - name: map
+  - name: reports
+  - name: kebeles
+  - name: streets
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +31,893 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user from JWT token
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /properties:
+    get:
+      operationId: listProperties
+      tags: [properties]
+      summary: List properties with optional filters
+      parameters:
+        - name: kebele
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: property_type
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyListResponse"
+    post:
+      operationId: createProperty
+      tags: [properties]
+      summary: Register a new property
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+
+  /properties/{id}:
+    get:
+      operationId: getProperty
+      tags: [properties]
+      summary: Get property details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+    patch:
+      operationId: updateProperty
+      tags: [properties]
+      summary: Update property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyUpdate"
+      responses:
+        "200":
+          description: Updated property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+    delete:
+      operationId: deleteProperty
+      tags: [properties]
+      summary: Delete property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /properties/{id}/approve:
+    post:
+      operationId: approveProperty
+      tags: [properties]
+      summary: Approve a property and generate official address code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Approved property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+
+  /properties/{id}/reject:
+    post:
+      operationId: rejectProperty
+      tags: [properties]
+      summary: Reject a property with remarks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectionInput"
+      responses:
+        "200":
+          description: Rejected property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+
+  /properties/{id}/resubmit:
+    post:
+      operationId: resubmitProperty
+      tags: [properties]
+      summary: Resubmit a rejected property after edits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resubmitted property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+
+  /properties/check-duplicate:
+    get:
+      operationId: checkDuplicate
+      tags: [properties]
+      summary: Check for duplicate GPS or house number
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: house_number
+          in: query
+          schema:
+            type: string
+        - name: street_name
+          in: query
+          schema:
+            type: string
+        - name: block_code
+          in: query
+          schema:
+            type: string
+        - name: exclude_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Duplicate check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateCheckResult"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/by-kebele:
+    get:
+      operationId: getByKebele
+      tags: [dashboard]
+      summary: Get property count grouped by kebele
+      responses:
+        "200":
+          description: Properties by kebele
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KebeleCount"
+
+  /dashboard/recent:
+    get:
+      operationId: getRecentProperties
+      tags: [dashboard]
+      summary: Get recently registered properties
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recent properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Property"
+
+  /map/properties:
+    get:
+      operationId: getMapProperties
+      tags: [map]
+      summary: Get all properties with GPS for map display
+      parameters:
+        - name: kebele
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: property_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map properties with GPS
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapProperty"
+
+  /reports/properties:
+    get:
+      operationId: getPropertyReport
+      tags: [reports]
+      summary: Get property data for report/CSV export
+      parameters:
+        - name: kebele
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: property_type
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+        - name: to_date
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /kebeles:
+    get:
+      operationId: listKebeles
+      tags: [kebeles]
+      summary: List all kebeles
+      responses:
+        "200":
+          description: List of kebeles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Kebele"
+
+  /streets:
+    get:
+      operationId: listStreets
+      tags: [streets]
+      summary: List streets with optional kebele filter
+      parameters:
+        - name: kebele_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of streets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Street"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, username, fullName, role, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, city_officer, kebele_officer, enumerator, viewer]
+        kebeleId:
+          type: ["integer", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+
+    UserInput:
+      type: object
+      required: [username, password, fullName, role]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [admin, city_officer, kebele_officer, enumerator, viewer]
+        kebeleId:
+          type: ["integer", "null"]
+
+    UserUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [admin, city_officer, kebele_officer, enumerator, viewer]
+        kebeleId:
+          type: ["integer", "null"]
+        isActive:
+          type: boolean
+        password:
+          type: string
+
+    Property:
+      type: object
+      required: [id, propertyType, ownerName, kebele, streetName, status, createdAt]
+      properties:
+        id:
+          type: integer
+        addressCode:
+          type: ["string", "null"]
+        houseNumber:
+          type: ["string", "null"]
+        buildingName:
+          type: ["string", "null"]
+        propertyType:
+          type: string
+          enum: [residential, commercial, government, institution, mixed]
+        ownershipType:
+          type: ["string", "null"]
+          enum: [private, government, institutional, null]
+        ownerName:
+          type: string
+        ownerPhone:
+          type: ["string", "null"]
+        occupantName:
+          type: ["string", "null"]
+        occupantPhone:
+          type: ["string", "null"]
+        businessName:
+          type: ["string", "null"]
+        businessLicenseNumber:
+          type: ["string", "null"]
+        numberOfFloors:
+          type: ["integer", "null"]
+        buildingUse:
+          type: ["string", "null"]
+        kebele:
+          type: string
+        streetName:
+          type: string
+        blockCode:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        propertyPhoto:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, pending, kebele_verified, approved, rejected]
+        remark:
+          type: ["string", "null"]
+        createdBy:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        createdByUser:
+          $ref: "#/components/schemas/UserSummary"
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        role:
+          type: string
+
+    PropertyInput:
+      type: object
+      required: [propertyType, ownerName, kebele, streetName]
+      properties:
+        houseNumber:
+          type: string
+        buildingName:
+          type: string
+        propertyType:
+          type: string
+          enum: [residential, commercial, government, institution, mixed]
+        ownershipType:
+          type: string
+          enum: [private, government, institutional]
+        ownerName:
+          type: string
+        ownerPhone:
+          type: string
+        occupantName:
+          type: string
+        occupantPhone:
+          type: string
+        businessName:
+          type: string
+        businessLicenseNumber:
+          type: string
+        numberOfFloors:
+          type: integer
+        buildingUse:
+          type: string
+        kebele:
+          type: string
+        streetName:
+          type: string
+        blockCode:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        propertyPhoto:
+          type: string
+        remark:
+          type: string
+
+    PropertyUpdate:
+      type: object
+      properties:
+        houseNumber:
+          type: string
+        buildingName:
+          type: string
+        propertyType:
+          type: string
+          enum: [residential, commercial, government, institution, mixed]
+        ownershipType:
+          type: string
+          enum: [private, government, institutional]
+        ownerName:
+          type: string
+        ownerPhone:
+          type: string
+        occupantName:
+          type: string
+        occupantPhone:
+          type: string
+        businessName:
+          type: string
+        businessLicenseNumber:
+          type: string
+        numberOfFloors:
+          type: integer
+        buildingUse:
+          type: string
+        kebele:
+          type: string
+        streetName:
+          type: string
+        blockCode:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        propertyPhoto:
+          type: string
+        remark:
+          type: string
+
+    PropertyListResponse:
+      type: object
+      required: [properties, total, page, limit]
+      properties:
+        properties:
+          type: array
+          items:
+            $ref: "#/components/schemas/Property"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ApprovalInput:
+      type: object
+      properties:
+        remark:
+          type: string
+
+    RejectionInput:
+      type: object
+      required: [remark]
+      properties:
+        remark:
+          type: string
+
+    DuplicateCheckResult:
+      type: object
+      required: [hasDuplicateGps, hasDuplicateHouseNumber]
+      properties:
+        hasDuplicateGps:
+          type: boolean
+        hasDuplicateHouseNumber:
+          type: boolean
+        nearbyProperties:
+          type: array
+          items:
+            $ref: "#/components/schemas/MapProperty"
+
+    DashboardStats:
+      type: object
+      required: [total, approved, pending, rejected, residential, commercial, government, institution, mixed, withoutGps, kebeleBreakdown]
+      properties:
+        total:
+          type: integer
+        approved:
+          type: integer
+        pending:
+          type: integer
+        rejected:
+          type: integer
+        kebeleVerified:
+          type: integer
+        residential:
+          type: integer
+        commercial:
+          type: integer
+        government:
+          type: integer
+        institution:
+          type: integer
+        mixed:
+          type: integer
+        withoutGps:
+          type: integer
+        kebeleBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/KebeleCount"
+
+    KebeleCount:
+      type: object
+      required: [kebele, count]
+      properties:
+        kebele:
+          type: string
+        count:
+          type: integer
+
+    MapProperty:
+      type: object
+      required: [id, propertyType, status, latitude, longitude, ownerName, kebele, streetName]
+      properties:
+        id:
+          type: integer
+        addressCode:
+          type: ["string", "null"]
+        propertyType:
+          type: string
+        status:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        ownerName:
+          type: string
+        buildingName:
+          type: ["string", "null"]
+        kebele:
+          type: string
+        streetName:
+          type: string
+        houseNumber:
+          type: ["string", "null"]
+
+    ReportResponse:
+      type: object
+      required: [properties, generatedAt]
+      properties:
+        properties:
+          type: array
+          items:
+            $ref: "#/components/schemas/Property"
+        generatedAt:
+          type: string
+        summary:
+          $ref: "#/components/schemas/DashboardStats"
+
+    Kebele:
+      type: object
+      required: [id, name, code]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        district:
+          type: ["string", "null"]
+
+    Street:
+      type: object
+      required: [id, name, code, kebeleId]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        kebeleId:
+          type: integer

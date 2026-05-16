@@ -1,0 +1,115 @@
+Create a full-stack MVP for Jimma City Digital Street Address MIS.
+
+Use:
+- React + Tailwind CSS frontend
+- Node.js + Express backend
+- PostgreSQL database
+- Leaflet map with OpenStreetMap
+- JWT authentication
+- Role-based access control
+
+System purpose:
+Register every private house, commercial building, government office, and institution in Jimma City. Field users collect GPS coordinates and property data using a mobile-responsive web form. Admins manage and approve records using a web dashboard.
+
+Build the project in one Replit app with frontend and backend.
+
+Main roles:
+1. Admin
+2. City Officer
+3. Kebele Officer
+4. Enumerator
+5. Viewer
+
+Core features for MVP:
+1. Login page
+2. Dashboard page
+3. Property registration form
+4. GPS capture using browser geolocation
+5. Property photo upload
+6. Property list table
+7. Property detail page
+8. Approval workflow
+9. GIS map page
+10. Reports page
+
+Database tables:
+- users
+- roles
+- locations
+- streets
+- properties
+- property_photos
+- approvals
+- audit_logs
+
+Property fields:
+- property_id
+- address_code
+- house_number
+- building_name
+- property_type
+- ownership_type
+- owner_name
+- owner_phone
+- occupant_name
+- occupant_phone
+- business_name
+- business_license_number
+- number_of_floors
+- building_use
+- kebele
+- street_name
+- block_code
+- latitude
+- longitude
+- property_photo
+- status
+- remark
+- created_by
+- created_at
+
+Address code format:
+JIM-KB{KebeleCode}-ST{StreetCode}-BL{BlockCode}-HN{HouseNumber}
+
+Workflow:
+Enumerator submits property.
+Kebele Officer verifies.
+City Officer approves.
+System generates final official address code.
+Rejected records can be edited and resubmitted.
+
+Dashboard indicators:
+- Total registered properties
+- Approved properties
+- Pending properties
+- Rejected properties
+- Residential properties
+- Commercial properties
+- Properties without GPS
+- Registration by kebele
+
+GIS map:
+Use Leaflet.
+Show property points on map.
+Use different marker colors for residential, commercial, government, and mixed-use properties.
+Click marker to view property summary.
+Filter by kebele, property type, and status.
+
+Reports:
+Create simple report tables and export to CSV.
+
+Important requirements:
+- Mobile-responsive UI
+- Clean professional dashboard
+- Form validation
+- Duplicate GPS warning
+- Duplicate house number warning within same street/block
+- Search and filter
+- Seed sample data for Jimma City
+- README with setup instructions
+
+Generate complete working code step by step.
+First create project structure, backend, database connection, authentication, and seed data.
+Then create frontend pages.
+Then connect frontend to backend.
+Then add GIS map and reports.

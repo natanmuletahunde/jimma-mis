@@ -1,6 +1,6 @@
-# [Project name]
+# Jimma City Digital Street Address MIS
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack municipal property registration and address management system for Jimma City, Ethiopia. Field enumerators register properties with GPS coordinates, kebele/city officers approve records, and the system generates official address codes.
 
 ## Run & Operate
 
@@ -14,7 +14,8 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Frontend: React + Vite, Tailwind CSS, Leaflet/OpenStreetMap
+- API: Express 5 + JWT authentication
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
@@ -22,15 +23,51 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — API contract (source of truth)
+- `lib/db/src/schema/` — DB tables: kebeles, streets, users, properties, approvals, property_photos, audit_logs
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/api-server/src/middlewares/auth.ts` — JWT middleware
+- `artifacts/jimma-mis/src/` — React frontend
+- `artifacts/jimma-mis/src/hooks/use-auth.tsx` — Auth context
+
+## Default Login Credentials
+
+| Username | Password | Role |
+|---|---|---|
+| admin | admin123 | Admin |
+| city_officer1 | admin123 | City Officer |
+| kebele_officer1 | admin123 | Kebele Officer |
+| enumerator1 | admin123 | Enumerator |
+| viewer1 | admin123 | Viewer |
+
+## Address Code Format
+
+`JIM-KB{KebeleCode}-ST{StreetCode}-BL{BlockCode}-HN{HouseNumber}`
+
+Example: `JIM-KB01-ABAJIF-BL01-HN101`
+
+## Approval Workflow
+
+1. Enumerator submits property (status: `pending`)
+2. Kebele Officer verifies (status: `kebele_verified`)
+3. City Officer approves → system generates official address code (status: `approved`)
+4. Rejected records can be edited and resubmitted
+
+## Roles
+
+- **Admin** — Full access, user management
+- **City Officer** — Approve/reject properties
+- **Kebele Officer** — Verify properties in their kebele
+- **Enumerator** — Register new properties
+- **Viewer** — Read-only access
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Contract-first: OpenAPI spec gates codegen, which gates frontend hooks — no manual type duplication
+- JWT stored in localStorage, sent as `Authorization: Bearer` header via `setAuthTokenGetter` in `@workspace/api-client-react/custom-fetch`
+- Leaflet + OpenStreetMap for GIS (no API key needed, open tiles)
+- Address code auto-generated on approval: `JIM-KB{kebele}-ST{street}-BL{block}-HN{house}`
+- Role-based access enforced on both frontend (UI visibility) and backend (route middleware)
 
 ## User preferences
 
@@ -38,7 +75,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run `pnpm --filter @workspace/api-spec run codegen` after changing `openapi.yaml`
+- `JWT_SECRET` env var defaults to a hardcoded dev string — set it properly in production
+- Leaflet marker icons need CDN workaround for default icons in Vite builds
 
 ## Pointers
 
