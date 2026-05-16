@@ -22,7 +22,7 @@ export function Sidebar() {
     { href: "/reports", label: "Reports", icon: FileText },
   ];
 
-  if (user?.role === "admin") {
+  if (user?.role === "admin" || user?.role === "city_officer") {
     navItems.push({ href: "/users", label: "Users", icon: Users });
   }
 

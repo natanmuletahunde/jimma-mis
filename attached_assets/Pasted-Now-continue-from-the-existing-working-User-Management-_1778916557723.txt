@@ -1,0 +1,147 @@
+Now continue from the existing working User Management module.
+
+Your task is to build the Location, Street, and Address Setup module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Setup APIs
+
+Create or fix these endpoints:
+
+GET /api/locations
+GET /api/locations/:id
+POST /api/locations
+PUT /api/locations/:id
+DELETE /api/locations/:id
+
+GET /api/streets
+GET /api/streets/:id
+POST /api/streets
+PUT /api/streets/:id
+DELETE /api/streets/:id
+
+GET /api/blocks
+POST /api/blocks
+PUT /api/blocks/:id
+DELETE /api/blocks/:id
+
+2. Location Fields
+
+Each location should include:
+
+- City Name
+- Sub-City Name
+- Woreda Name
+- Kebele Name
+- Kebele Code
+- Status
+- Created At
+- Updated At
+
+3. Street Fields
+
+Each street should include:
+
+- Street Name
+- Street Code
+- Kebele
+- Street Type
+- Road Surface Type
+- Start Latitude
+- Start Longitude
+- End Latitude
+- End Longitude
+- Status
+- Description
+
+4. Block Fields
+
+Each block should include:
+
+- Block Code
+- Kebele
+- Street
+- Description
+- Status
+
+5. Frontend Pages
+
+Create or improve these routes:
+
+/setup/locations
+/setup/streets
+/setup/blocks
+
+Each page should include:
+
+- list table
+- search
+- filter by kebele/status
+- add button
+- edit button
+- delete button
+- activate/deactivate option
+
+6. Address Code Integration
+
+Update property registration form so that:
+
+- Kebele dropdown loads from locations
+- Street dropdown loads based on selected kebele
+- Block dropdown loads based on selected street
+- Address code uses official kebele code, street code, and block code
+
+Address format:
+JIM-KB{KebeleCode}-ST{StreetCode}-BL{BlockCode}-HN{HouseNumber}
+
+7. Role Access
+
+Admin can create, edit, delete setup data.
+
+City Officer can view and edit setup data.
+
+Kebele Officer can view setup data for assigned kebele only.
+
+Enumerator can only view active kebeles, streets, and blocks in assigned area.
+
+Viewer has read-only access.
+
+8. Validation
+
+Add validation:
+
+- Kebele Code must be unique
+- Street Code must be unique within kebele
+- Block Code must be unique within street
+- Cannot delete setup data already used by properties
+- Only active locations/streets/blocks should appear in property registration dropdowns
+
+9. Audit Logs
+
+Create audit logs for:
+
+- location created/updated/deleted
+- street created/updated/deleted
+- block created/updated/deleted
+
+10. Final Check
+
+After implementation, test:
+
+- create kebele/location
+- create street under kebele
+- create block under street
+- property registration dropdowns work correctly
+- address code generation uses setup codes
+- duplicate codes are blocked
+- used setup data cannot be deleted
+- role-based access works
+- audit logs are created
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues
