@@ -709,7 +709,9 @@ export const GetPropertyReportQueryParams = zod.object({
   "status": zod.coerce.string().optional(),
   "property_type": zod.coerce.string().optional(),
   "from_date": zod.coerce.string().optional(),
-  "to_date": zod.coerce.string().optional()
+  "to_date": zod.coerce.string().optional(),
+  "street_name": zod.coerce.string().optional(),
+  "enumerator_name": zod.coerce.string().optional()
 })
 
 export const GetPropertyReportResponse = zod.object({
@@ -764,6 +766,24 @@ export const GetPropertyReportResponse = zod.object({
 }))
 }).optional()
 })
+
+
+/**
+ * @summary Get per-enumerator registration statistics
+ */
+export const GetEnumeratorPerformanceResponseItem = zod.object({
+  "enumeratorId": zod.number(),
+  "enumeratorName": zod.string(),
+  "kebele": zod.string().nullish(),
+  "totalRegistered": zod.number(),
+  "draft": zod.number(),
+  "pending": zod.number(),
+  "kebeleVerified": zod.number(),
+  "approved": zod.number(),
+  "rejected": zod.number(),
+  "missingGps": zod.number()
+})
+export const GetEnumeratorPerformanceResponse = zod.array(GetEnumeratorPerformanceResponseItem)
 
 
 /**

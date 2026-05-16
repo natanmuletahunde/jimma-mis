@@ -544,6 +544,14 @@ paths:
           in: query
           schema:
             type: string
+        - name: street_name
+          in: query
+          schema:
+            type: string
+        - name: enumerator_name
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Report data
@@ -551,6 +559,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportResponse"
+
+  /reports/enumerator-performance:
+    get:
+      operationId: getEnumeratorPerformance
+      tags: [reports]
+      summary: Get per-enumerator registration statistics
+      responses:
+        "200":
+          description: Enumerator performance data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnumeratorPerformance"
 
   /kebeles:
     get:
@@ -1029,6 +1052,31 @@ components:
           type: string
         summary:
           $ref: "#/components/schemas/DashboardStats"
+
+    EnumeratorPerformance:
+      type: object
+      required: [enumeratorId, enumeratorName, totalRegistered, draft, pending, kebeleVerified, approved, rejected, missingGps]
+      properties:
+        enumeratorId:
+          type: integer
+        enumeratorName:
+          type: string
+        kebele:
+          type: ["string", "null"]
+        totalRegistered:
+          type: integer
+        draft:
+          type: integer
+        pending:
+          type: integer
+        kebeleVerified:
+          type: integer
+        approved:
+          type: integer
+        rejected:
+          type: integer
+        missingGps:
+          type: integer
 
     Kebele:
       type: object

@@ -12,4 +12,6 @@ status?: string;
 property_type?: string;
 from_date?: string;
 to_date?: string;
+street_name?: string;
+enumerator_name?: string;
 };

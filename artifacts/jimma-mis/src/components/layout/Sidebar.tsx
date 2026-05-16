@@ -27,7 +27,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-sm z-10 relative">
+    <div className="hidden md:flex print:hidden w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-sm z-10 relative">
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border bg-sidebar shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold">

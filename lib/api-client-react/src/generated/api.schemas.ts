@@ -368,6 +368,20 @@ export interface ReportResponse {
   summary?: DashboardStats;
 }
 
+export interface EnumeratorPerformance {
+  enumeratorId: number;
+  enumeratorName: string;
+  /** @nullable */
+  kebele?: string | null;
+  totalRegistered: number;
+  draft: number;
+  pending: number;
+  kebeleVerified: number;
+  approved: number;
+  rejected: number;
+  missingGps: number;
+}
+
 export interface Kebele {
   id: number;
   name: string;
@@ -423,6 +437,8 @@ status?: string;
 property_type?: string;
 from_date?: string;
 to_date?: string;
+street_name?: string;
+enumerator_name?: string;
 };
 
 export type ListStreetsParams = {

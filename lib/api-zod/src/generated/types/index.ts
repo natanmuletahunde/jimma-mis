@@ -12,6 +12,7 @@ export * from './authResponse';
 export * from './checkDuplicateParams';
 export * from './dashboardStats';
 export * from './duplicateCheckResult';
+export * from './enumeratorPerformance';
 export * from './getMapPropertiesParams';
 export * from './getPropertyReportParams';
 export * from './getRecentPropertiesParams';

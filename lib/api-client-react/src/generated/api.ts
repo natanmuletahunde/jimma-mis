@@ -26,6 +26,7 @@ import type {
   CheckDuplicateParams,
   DashboardStats,
   DuplicateCheckResult,
+  EnumeratorPerformance,
   GetMapPropertiesParams,
   GetPropertyReportParams,
   GetRecentPropertiesParams,
@@ -1951,6 +1952,83 @@ export function useGetPropertyReport<TData = Awaited<ReturnType<typeof getProper
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPropertyReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetEnumeratorPerformanceUrl = () => {
+
+
+
+
+  return `/api/reports/enumerator-performance`
+}
+
+/**
+ * @summary Get per-enumerator registration statistics
+ */
+export const getEnumeratorPerformance = async ( options?: RequestInit): Promise<EnumeratorPerformance[]> => {
+
+  return customFetch<EnumeratorPerformance[]>(getGetEnumeratorPerformanceUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEnumeratorPerformanceQueryKey = () => {
+    return [
+    `/api/reports/enumerator-performance`
+    ] as const;
+    }
+
+
+export const getGetEnumeratorPerformanceQueryOptions = <TData = Awaited<ReturnType<typeof getEnumeratorPerformance>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEnumeratorPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEnumeratorPerformanceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEnumeratorPerformance>>> = ({ signal }) => getEnumeratorPerformance({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEnumeratorPerformance>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetEnumeratorPerformanceQueryResult = NonNullable<Awaited<ReturnType<typeof getEnumeratorPerformance>>>
+export type GetEnumeratorPerformanceQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get per-enumerator registration statistics
+ */
+
+export function useGetEnumeratorPerformance<TData = Awaited<ReturnType<typeof getEnumeratorPerformance>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getEnumeratorPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetEnumeratorPerformanceQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
