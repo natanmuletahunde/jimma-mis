@@ -299,11 +299,21 @@ export interface MapProperty {
   longitude: number;
   ownerName: string;
   /** @nullable */
+  ownerPhone?: string | null;
+  /** @nullable */
+  businessName?: string | null;
+  /** @nullable */
+  ownershipType?: string | null;
+  /** @nullable */
   buildingName?: string | null;
   kebele: string;
   streetName: string;
   /** @nullable */
+  blockCode?: string | null;
+  /** @nullable */
   houseNumber?: string | null;
+  /** @nullable */
+  propertyPhoto?: string | null;
 }
 
 export interface DuplicateCheckResult {
@@ -330,6 +340,26 @@ export interface DashboardStats {
   mixed: number;
   withoutGps: number;
   kebeleBreakdown: KebeleCount[];
+}
+
+export interface MissingGpsProperty {
+  id: number;
+  ownerName: string;
+  kebele: string;
+  streetName: string;
+  /** @nullable */
+  houseNumber?: string | null;
+  status: string;
+}
+
+export interface MapSummary {
+  total: number;
+  residential: number;
+  commercial: number;
+  approved: number;
+  pending: number;
+  missingGps: number;
+  missingGpsList: MissingGpsProperty[];
 }
 
 export interface ReportResponse {
@@ -384,6 +414,7 @@ export type GetMapPropertiesParams = {
 kebele?: string;
 status?: string;
 property_type?: string;
+search?: string;
 };
 
 export type GetPropertyReportParams = {

@@ -10,4 +10,5 @@ export type GetMapPropertiesParams = {
 kebele?: string;
 status?: string;
 property_type?: string;
+search?: string;
 };

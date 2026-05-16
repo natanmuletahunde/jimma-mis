@@ -491,6 +491,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: search
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: Map properties with GPS
@@ -500,6 +504,19 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MapProperty"
+
+  /map/summary:
+    get:
+      operationId: getMapSummary
+      tags: [map]
+      summary: Get summary statistics for the GIS map dashboard
+      responses:
+        "200":
+          description: GIS map summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapSummary"
 
   /reports/properties:
     get:
@@ -943,14 +960,62 @@ components:
           type: number
         ownerName:
           type: string
+        ownerPhone:
+          type: ["string", "null"]
+        businessName:
+          type: ["string", "null"]
+        ownershipType:
+          type: ["string", "null"]
         buildingName:
           type: ["string", "null"]
         kebele:
           type: string
         streetName:
           type: string
+        blockCode:
+          type: ["string", "null"]
         houseNumber:
           type: ["string", "null"]
+        propertyPhoto:
+          type: ["string", "null"]
+
+    MapSummary:
+      type: object
+      required: [total, residential, commercial, approved, pending, missingGps, missingGpsList]
+      properties:
+        total:
+          type: integer
+        residential:
+          type: integer
+        commercial:
+          type: integer
+        approved:
+          type: integer
+        pending:
+          type: integer
+        missingGps:
+          type: integer
+        missingGpsList:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissingGpsProperty"
+
+    MissingGpsProperty:
+      type: object
+      required: [id, ownerName, kebele, streetName, status]
+      properties:
+        id:
+          type: integer
+        ownerName:
+          type: string
+        kebele:
+          type: string
+        streetName:
+          type: string
+        houseNumber:
+          type: ["string", "null"]
+        status:
+          type: string
 
     ReportResponse:
       type: object

@@ -37,6 +37,7 @@ import type {
   ListUsersParams,
   LoginInput,
   MapProperty,
+  MapSummary,
   Property,
   PropertyInput,
   PropertyListResponse,
@@ -1789,6 +1790,83 @@ export function useGetMapProperties<TData = Awaited<ReturnType<typeof getMapProp
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetMapPropertiesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMapSummaryUrl = () => {
+
+
+
+
+  return `/api/map/summary`
+}
+
+/**
+ * @summary Get summary statistics for the GIS map dashboard
+ */
+export const getMapSummary = async ( options?: RequestInit): Promise<MapSummary> => {
+
+  return customFetch<MapSummary>(getGetMapSummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMapSummaryQueryKey = () => {
+    return [
+    `/api/map/summary`
+    ] as const;
+    }
+
+
+export const getGetMapSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getMapSummary>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMapSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMapSummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMapSummary>>> = ({ signal }) => getMapSummary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMapSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMapSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getMapSummary>>>
+export type GetMapSummaryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get summary statistics for the GIS map dashboard
+ */
+
+export function useGetMapSummary<TData = Awaited<ReturnType<typeof getMapSummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMapSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMapSummaryQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

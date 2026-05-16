@@ -562,10 +562,15 @@ export const CheckDuplicateResponse = zod.object({
   "latitude": zod.number(),
   "longitude": zod.number(),
   "ownerName": zod.string(),
+  "ownerPhone": zod.string().nullish(),
+  "businessName": zod.string().nullish(),
+  "ownershipType": zod.string().nullish(),
   "buildingName": zod.string().nullish(),
   "kebele": zod.string(),
   "streetName": zod.string(),
-  "houseNumber": zod.string().nullish()
+  "blockCode": zod.string().nullish(),
+  "houseNumber": zod.string().nullish(),
+  "propertyPhoto": zod.string().nullish()
 })).optional()
 })
 
@@ -650,7 +655,8 @@ export const GetRecentPropertiesResponse = zod.array(GetRecentPropertiesResponse
 export const GetMapPropertiesQueryParams = zod.object({
   "kebele": zod.coerce.string().optional(),
   "status": zod.coerce.string().optional(),
-  "property_type": zod.coerce.string().optional()
+  "property_type": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional()
 })
 
 export const GetMapPropertiesResponseItem = zod.object({
@@ -661,12 +667,38 @@ export const GetMapPropertiesResponseItem = zod.object({
   "latitude": zod.number(),
   "longitude": zod.number(),
   "ownerName": zod.string(),
+  "ownerPhone": zod.string().nullish(),
+  "businessName": zod.string().nullish(),
+  "ownershipType": zod.string().nullish(),
   "buildingName": zod.string().nullish(),
   "kebele": zod.string(),
   "streetName": zod.string(),
-  "houseNumber": zod.string().nullish()
+  "blockCode": zod.string().nullish(),
+  "houseNumber": zod.string().nullish(),
+  "propertyPhoto": zod.string().nullish()
 })
 export const GetMapPropertiesResponse = zod.array(GetMapPropertiesResponseItem)
+
+
+/**
+ * @summary Get summary statistics for the GIS map dashboard
+ */
+export const GetMapSummaryResponse = zod.object({
+  "total": zod.number(),
+  "residential": zod.number(),
+  "commercial": zod.number(),
+  "approved": zod.number(),
+  "pending": zod.number(),
+  "missingGps": zod.number(),
+  "missingGpsList": zod.array(zod.object({
+  "id": zod.number(),
+  "ownerName": zod.string(),
+  "kebele": zod.string(),
+  "streetName": zod.string(),
+  "houseNumber": zod.string().nullish(),
+  "status": zod.string()
+}))
+})
 
 
 /**

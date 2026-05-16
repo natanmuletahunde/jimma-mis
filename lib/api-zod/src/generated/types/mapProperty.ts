@@ -16,9 +16,19 @@ export interface MapProperty {
   longitude: number;
   ownerName: string;
   /** @nullable */
+  ownerPhone?: string | null;
+  /** @nullable */
+  businessName?: string | null;
+  /** @nullable */
+  ownershipType?: string | null;
+  /** @nullable */
   buildingName?: string | null;
   kebele: string;
   streetName: string;
   /** @nullable */
+  blockCode?: string | null;
+  /** @nullable */
   houseNumber?: string | null;
+  /** @nullable */
+  propertyPhoto?: string | null;
 }

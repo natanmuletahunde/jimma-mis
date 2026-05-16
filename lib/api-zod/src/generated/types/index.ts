@@ -23,6 +23,8 @@ export * from './listStreetsParams';
 export * from './listUsersParams';
 export * from './loginInput';
 export * from './mapProperty';
+export * from './mapSummary';
+export * from './missingGpsProperty';
 export * from './property';
 export * from './propertyInput';
 export * from './propertyInputOwnershipType';
