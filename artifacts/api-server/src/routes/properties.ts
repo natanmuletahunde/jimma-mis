@@ -4,7 +4,7 @@ import fs from "fs";
 import { Router } from "express";
 import multer from "multer";
 import { db, propertiesTable, approvalsTable, usersTable, propertyPhotosTable } from "@workspace/db";
-import { eq, and, ilike, or, sql, ne, desc } from "drizzle-orm";
+import { eq, and, ilike, or, sql, ne, desc, inArray } from "drizzle-orm";
 import {
   ListPropertiesQueryParams,
   CreatePropertyBody,
@@ -90,16 +90,24 @@ router.get("/properties/check-duplicate", requireAuth, async (req, res): Promise
 
   let hasDuplicateGps = false;
   let nearbyProperties: unknown[] = [];
-  if (latitude != null && longitude != null) {
-    const excl = exclude_id ? [ne(propertiesTable.id, exclude_id)] : [];
-    const gpsProps = await db.select().from(propertiesTable).where(excl.length ? and(...excl) : undefined);
+  // Guard against NaN/Infinity from coerce (e.g. empty string → NaN) and out-of-range values
+  const latValid = latitude != null && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90;
+  const lngValid = longitude != null && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+  if (latValid && lngValid) {
+    // Only compare against active records — draft and rejected properties are not canonical addresses
+    const baseConds = [
+      inArray(propertiesTable.status, ["pending", "kebele_verified", "approved"]),
+    ];
+    if (exclude_id) baseConds.push(ne(propertiesTable.id, exclude_id));
+    const gpsProps = await db.select().from(propertiesTable).where(and(...baseConds));
     const nearby = gpsProps.filter((p) => {
       if (p.latitude == null || p.longitude == null) return false;
+      if (!Number.isFinite(p.latitude) || !Number.isFinite(p.longitude)) return false;
       const dist = Math.sqrt(
-        Math.pow((p.latitude - latitude) * 111000, 2) +
-          Math.pow((p.longitude - longitude) * 111000 * Math.cos((latitude * Math.PI) / 180), 2),
+        Math.pow((p.latitude - latitude!) * 111000, 2) +
+          Math.pow((p.longitude - longitude!) * 111000 * Math.cos((latitude! * Math.PI) / 180), 2),
       );
-      return dist < 10;
+      return Number.isFinite(dist) && dist < 10;
     });
     hasDuplicateGps = nearby.length > 0;
     nearbyProperties = nearby.map((p) => ({
@@ -269,7 +277,11 @@ router.delete("/properties/:id", requireAuth, requireRole("admin", "city_officer
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = DeletePropertyParams.safeParse({ id: parseInt(rawId, 10) });
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
-  await db.delete(propertiesTable).where(eq(propertiesTable.id, params.data.id));
+  const pid = params.data.id;
+  // Delete dependent rows first to avoid FK constraint violations
+  await db.delete(propertyPhotosTable).where(eq(propertyPhotosTable.propertyId, pid));
+  await db.delete(approvalsTable).where(eq(approvalsTable.propertyId, pid));
+  await db.delete(propertiesTable).where(eq(propertiesTable.id, pid));
   res.sendStatus(204);
 });
 

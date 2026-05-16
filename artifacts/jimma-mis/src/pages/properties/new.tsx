@@ -329,6 +329,14 @@ export default function NewProperty() {
       toast({ variant: "destructive", title: "GPS Required", description: "Capture GPS coordinates before submitting." });
       return;
     }
+    if (duplicateCheck?.hasDuplicateHouseNumber) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate House Number",
+        description: "This house number already exists on this street. Change the house number before submitting.",
+      });
+      return;
+    }
     const hasFrontView = pendingPhotos.some((p) => p.category === "front_view");
     if (!hasFrontView) {
       toast({ variant: "destructive", title: "Front View Photo Required", description: "Add at least one Front View photo before submitting." });
@@ -575,10 +583,13 @@ export default function NewProperty() {
                   <span>A property is already registered at these GPS coordinates. Please verify the location.</span>
                 </div>
               )}
-              {duplicateCheck?.hasDuplicateHouseNumber && !duplicateCheck.hasDuplicateGps && (
-                <div className="flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-md text-sm">
+              {duplicateCheck?.hasDuplicateHouseNumber && (
+                <div className="flex items-start gap-2 text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-md text-sm">
                   <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>This house number may already exist on this street. Please double-check before submitting.</span>
+                  <div>
+                    <p className="font-medium">Duplicate house number — submission blocked</p>
+                    <p className="mt-0.5 text-xs opacity-80">This house number already exists on this street. Change the house number or block code before submitting.</p>
+                  </div>
                 </div>
               )}
 
