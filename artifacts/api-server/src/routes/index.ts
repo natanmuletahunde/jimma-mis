@@ -8,6 +8,7 @@ import dashboardRouter from "./dashboard";
 import mapRouter from "./map";
 import reportsRouter from "./reports";
 import locationsRouter from "./locations";
+import auditLogsRouter from "./audit-logs";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(dashboardRouter);
 router.use(mapRouter);
 router.use(reportsRouter);
 router.use(locationsRouter);
+router.use(auditLogsRouter);
 
 export default router;

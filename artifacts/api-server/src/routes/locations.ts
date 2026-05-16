@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, kebelesTable, streetsTable, blocksTable, propertiesTable, auditLogsTable } from "@workspace/db";
+import { db, kebelesTable, streetsTable, blocksTable, propertiesTable } from "@workspace/db";
+import { writeAudit as _audit } from "../lib/audit";
 import { eq, and, ilike, ne, or } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
 
@@ -8,7 +9,7 @@ const router = Router();
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function writeAudit(actorId: number, action: string, entityType: string, entityId: number, details: string) {
-  await db.insert(auditLogsTable).values({ userId: actorId, action, entityType, entityId, details });
+  await _audit({ userId: actorId, action, entityType, entityId, details });
 }
 
 function parseId(raw: string | string[]): number {

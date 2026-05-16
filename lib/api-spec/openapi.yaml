@@ -18,6 +18,7 @@ tags:
   - name: kebeles
   - name: streets
   - name: blocks
+  - name: audit-logs
 
 paths:
   /healthz:
@@ -951,6 +952,113 @@ paths:
         "404":
           description: Block not found
 
+  /audit-logs/summary:
+    get:
+      operationId: getAuditLogsSummary
+      tags: [audit-logs]
+      summary: Get audit log activity summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogSummary"
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit-logs]
+      summary: List audit logs with optional filters
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          schema:
+            type: string
+        - name: to_date
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paged audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogList"
+
+  /audit-logs/{id}:
+    get:
+      operationId: getAuditLog
+      tags: [audit-logs]
+      summary: Get a single audit log entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit log entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLog"
+        "404":
+          description: Not found
+
+  /audit-logs/track:
+    post:
+      operationId: trackAuditEvent
+      tags: [audit-logs]
+      summary: Record a client-side audit event (e.g. CSV exports)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackAuditEventInput"
+      responses:
+        "201":
+          description: Recorded
+
 components:
   schemas:
     HealthStatus:
@@ -1605,3 +1713,79 @@ components:
         status:
           type: string
           enum: [active, inactive]
+
+    AuditLog:
+      type: object
+      required: [id, action, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        userRole:
+          type: ["string", "null"]
+        action:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        entityName:
+          type: ["string", "null"]
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        deviceInfo:
+          type: ["string", "null"]
+        details:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AuditLogList:
+      type: object
+      required: [logs, hasMore]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        hasMore:
+          type: boolean
+
+    AuditLogSummary:
+      type: object
+      required: [total, today, logins, propertyChanges, approvalActions, userManagement, reportExports]
+      properties:
+        total:
+          type: integer
+        today:
+          type: integer
+        logins:
+          type: integer
+        propertyChanges:
+          type: integer
+        approvalActions:
+          type: integer
+        userManagement:
+          type: integer
+        reportExports:
+          type: integer
+
+    TrackAuditEventInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+        entityType:
+          type: string
+        entityName:
+          type: string
+        details:
+          type: string

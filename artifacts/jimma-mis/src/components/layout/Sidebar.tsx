@@ -13,6 +13,7 @@ import {
   Settings2,
   ChevronDown,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,10 @@ export function Sidebar() {
 
         {(user?.role === "admin" || user?.role === "city_officer") && (
           <NavLink href="/users" label="Users" icon={Users} />
+        )}
+
+        {(user?.role === "admin" || user?.role === "city_officer") && (
+          <NavLink href="/audit-logs" label="Audit Logs" icon={ShieldCheck} />
         )}
 
         {isSetupRole && (

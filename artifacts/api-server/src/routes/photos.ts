@@ -6,6 +6,7 @@ import multer from "multer";
 import { db, propertiesTable, propertyPhotosTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
+import { auditReq } from "../lib/audit";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, "../uploads/properties");
@@ -144,6 +145,11 @@ router.post(
         .where(eq(propertiesTable.id, id));
     }
 
+    await auditReq(req, user.userId, "upload_photo", {
+      entityType: "property", entityId: id,
+      entityName: property.ownerName ?? null,
+      details: `Category: ${category}, file: ${req.file.originalname}`,
+    });
     res.status(201).json({ ...inserted, createdAt: inserted.createdAt.toISOString() });
   },
 );
@@ -191,6 +197,10 @@ router.delete(
         .where(eq(propertiesTable.id, id));
     }
 
+    await auditReq(req, req.user!.userId, "delete_photo", {
+      entityType: "property", entityId: id,
+      details: `Deleted photo: ${photo.fileName ?? photo.photoUrl}`,
+    });
     res.status(204).send();
   },
 );

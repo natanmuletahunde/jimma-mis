@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, usersTable, kebelesTable, auditLogsTable } from "@workspace/db";
+import { db, usersTable, kebelesTable } from "@workspace/db";
+import { writeAudit as _audit } from "../lib/audit";
 import { eq, ilike, or, and, ne } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
 
@@ -43,19 +44,8 @@ async function sanitizeUser(user: typeof usersTable.$inferSelect) {
   };
 }
 
-async function writeAudit(
-  actorId: number,
-  action: string,
-  entityId: number,
-  details?: string,
-) {
-  await db.insert(auditLogsTable).values({
-    userId: actorId,
-    action,
-    entityType: "user",
-    entityId,
-    details: details ?? null,
-  });
+async function writeAudit(actorId: number, action: string, entityId: number, details?: string) {
+  await _audit({ userId: actorId, action, entityType: "user", entityId, details: details ?? null });
 }
 
 // ─── GET /roles ──────────────────────────────────────────────────────────────────

@@ -8,6 +8,9 @@
 
 export * from './approvalInput';
 export * from './approvalRecord';
+export * from './auditLog';
+export * from './auditLogList';
+export * from './auditLogSummary';
 export * from './authResponse';
 export * from './block';
 export * from './blockInput';
@@ -28,6 +31,7 @@ export * from './kebeleCount';
 export * from './kebeleInput';
 export * from './kebeleInputStatus';
 export * from './kebeleStatus';
+export * from './listAuditLogsParams';
 export * from './listBlocksParams';
 export * from './listKebelesParams';
 export * from './listPropertiesParams';
@@ -55,6 +59,7 @@ export * from './street';
 export * from './streetInput';
 export * from './streetInputStatus';
 export * from './streetStatus';
+export * from './trackAuditEventInput';
 export * from './user';
 export * from './userInput';
 export * from './userInputRole';

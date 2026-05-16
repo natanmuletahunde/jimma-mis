@@ -5,10 +5,15 @@ import { usersTable } from "./users";
 
 export const auditLogsTable = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => usersTable.id),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   entityType: text("entity_type"),
   entityId: integer("entity_id"),
+  entityName: text("entity_name"),
+  oldValue: text("old_value"),
+  newValue: text("new_value"),
+  ipAddress: text("ip_address"),
+  deviceInfo: text("device_info"),
   details: text("details"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -22,6 +22,9 @@ import type {
 import type {
   ApprovalInput,
   ApprovalRecord,
+  AuditLog,
+  AuditLogList,
+  AuditLogSummary,
   AuthResponse,
   Block,
   BlockInput,
@@ -38,6 +41,7 @@ import type {
   Kebele,
   KebeleCount,
   KebeleInput,
+  ListAuditLogsParams,
   ListBlocksParams,
   ListKebelesParams,
   ListPropertiesParams,
@@ -55,6 +59,7 @@ import type {
   RoleItem,
   Street,
   StreetInput,
+  TrackAuditEventInput,
   User,
   UserInput,
   UserStatusUpdate,
@@ -3173,5 +3178,314 @@ export const useDeleteBlock = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteBlockMutationOptions(options));
+    }
+
+export const getGetAuditLogsSummaryUrl = () => {
+
+
+
+
+  return `/api/audit-logs/summary`
+}
+
+/**
+ * @summary Get audit log activity summary
+ */
+export const getAuditLogsSummary = async ( options?: RequestInit): Promise<AuditLogSummary> => {
+
+  return customFetch<AuditLogSummary>(getGetAuditLogsSummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuditLogsSummaryQueryKey = () => {
+    return [
+    `/api/audit-logs/summary`
+    ] as const;
+    }
+
+
+export const getGetAuditLogsSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getAuditLogsSummary>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuditLogsSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuditLogsSummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuditLogsSummary>>> = ({ signal }) => getAuditLogsSummary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuditLogsSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuditLogsSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getAuditLogsSummary>>>
+export type GetAuditLogsSummaryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get audit log activity summary
+ */
+
+export function useGetAuditLogsSummary<TData = Awaited<ReturnType<typeof getAuditLogsSummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuditLogsSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuditLogsSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListAuditLogsUrl = (params?: ListAuditLogsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/audit-logs?${stringifiedParams}` : `/api/audit-logs`
+}
+
+/**
+ * @summary List audit logs with optional filters
+ */
+export const listAuditLogs = async (params?: ListAuditLogsParams, options?: RequestInit): Promise<AuditLogList> => {
+
+  return customFetch<AuditLogList>(getListAuditLogsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAuditLogsQueryKey = (params?: ListAuditLogsParams,) => {
+    return [
+    `/api/audit-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorType<unknown>>(params?: ListAuditLogsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAuditLogsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLogs>>> = ({ signal }) => listAuditLogs(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditLogs>>>
+export type ListAuditLogsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List audit logs with optional filters
+ */
+
+export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs>>, TError = ErrorType<unknown>>(
+ params?: ListAuditLogsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAuditLogs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAuditLogsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetAuditLogUrl = (id: number,) => {
+
+
+
+
+  return `/api/audit-logs/${id}`
+}
+
+/**
+ * @summary Get a single audit log entry
+ */
+export const getAuditLog = async (id: number, options?: RequestInit): Promise<AuditLog> => {
+
+  return customFetch<AuditLog>(getGetAuditLogUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuditLogQueryKey = (id: number,) => {
+    return [
+    `/api/audit-logs/${id}`
+    ] as const;
+    }
+
+
+export const getGetAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof getAuditLog>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuditLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuditLogQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuditLog>>> = ({ signal }) => getAuditLog(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuditLog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof getAuditLog>>>
+export type GetAuditLogQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a single audit log entry
+ */
+
+export function useGetAuditLog<TData = Awaited<ReturnType<typeof getAuditLog>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuditLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuditLogQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getTrackAuditEventUrl = () => {
+
+
+
+
+  return `/api/audit-logs/track`
+}
+
+/**
+ * @summary Record a client-side audit event (e.g. CSV exports)
+ */
+export const trackAuditEvent = async (trackAuditEventInput: TrackAuditEventInput, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getTrackAuditEventUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      trackAuditEventInput,)
+  }
+);}
+
+
+
+
+export const getTrackAuditEventMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackAuditEvent>>, TError,{data: BodyType<TrackAuditEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof trackAuditEvent>>, TError,{data: BodyType<TrackAuditEventInput>}, TContext> => {
+
+const mutationKey = ['trackAuditEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trackAuditEvent>>, {data: BodyType<TrackAuditEventInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  trackAuditEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrackAuditEventMutationResult = NonNullable<Awaited<ReturnType<typeof trackAuditEvent>>>
+    export type TrackAuditEventMutationBody = BodyType<TrackAuditEventInput>
+    export type TrackAuditEventMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record a client-side audit event (e.g. CSV exports)
+ */
+export const useTrackAuditEvent = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackAuditEvent>>, TError,{data: BodyType<TrackAuditEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof trackAuditEvent>>,
+        TError,
+        {data: BodyType<TrackAuditEventInput>},
+        TContext
+      > => {
+      return useMutation(getTrackAuditEventMutationOptions(options));
     }
 

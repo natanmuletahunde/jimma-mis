@@ -1,9 +1,10 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, auditLogsTable } from "@workspace/db";
 import { eq, or } from "drizzle-orm";
 import { LoginBody } from "@workspace/api-zod";
 import { requireAuth, signToken } from "../middlewares/auth";
+import { getClientIp, getDeviceInfo } from "../lib/audit";
 
 const router = Router();
 
@@ -57,6 +58,18 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     role: user.role,
     kebeleId: user.kebeleId,
   });
+
+  // Fire-and-forget audit — must not block the login response
+  db.insert(auditLogsTable).values({
+    userId: user.id,
+    action: "login",
+    entityType: "user",
+    entityId: user.id,
+    entityName: user.username,
+    ipAddress: getClientIp(req),
+    deviceInfo: getDeviceInfo(req),
+    details: `Logged in as ${user.role}`,
+  }).catch(() => {});
 
   res.json({ token, user: sanitizeUser(user) });
 });

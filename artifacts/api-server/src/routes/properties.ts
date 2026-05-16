@@ -20,6 +20,7 @@ import {
   CheckDuplicateQueryParams,
 } from "@workspace/api-zod";
 import { requireAuth, requireRole } from "../middlewares/auth";
+import { auditReq } from "../lib/audit";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, "../uploads");
@@ -217,6 +218,10 @@ router.post("/properties", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   await db.insert(approvalsTable).values({ propertyId: prop.id, action: "created", actorId: req.user!.userId });
+  await auditReq(req, req.user!.userId, "create_property", {
+    entityType: "property", entityId: prop.id, entityName: prop.ownerName,
+    newValue: JSON.stringify({ kebele: prop.kebele, streetName: prop.streetName, houseNumber: prop.houseNumber ?? null }),
+  });
   res.status(201).json(serializeProperty(prop, null));
 });
 
@@ -268,6 +273,9 @@ router.patch("/properties/:id", requireAuth, async (req, res): Promise<void> => 
     .where(eq(propertiesTable.id, params.data.id))
     .returning();
 
+  await auditReq(req, req.user!.userId, "update_property", {
+    entityType: "property", entityId: prop.id, entityName: prop.ownerName,
+  });
   res.json(serializeProperty(prop, null));
 });
 
@@ -278,10 +286,14 @@ router.delete("/properties/:id", requireAuth, requireRole("admin", "city_officer
   const params = DeletePropertyParams.safeParse({ id: parseInt(rawId, 10) });
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const pid = params.data.id;
+  const [toDelete] = await db.select({ ownerName: propertiesTable.ownerName }).from(propertiesTable).where(eq(propertiesTable.id, pid));
   // Delete dependent rows first to avoid FK constraint violations
   await db.delete(propertyPhotosTable).where(eq(propertyPhotosTable.propertyId, pid));
   await db.delete(approvalsTable).where(eq(approvalsTable.propertyId, pid));
   await db.delete(propertiesTable).where(eq(propertiesTable.id, pid));
+  await auditReq(req, req.user!.userId, "delete_property", {
+    entityType: "property", entityId: pid, entityName: toDelete?.ownerName ?? null,
+  });
   res.sendStatus(204);
 });
 
@@ -329,7 +341,9 @@ router.post("/properties/:id/submit", requireAuth, async (req, res): Promise<voi
     .returning();
 
   await db.insert(approvalsTable).values({ propertyId: id, action: "submitted", actorId: req.user!.userId });
-
+  await auditReq(req, req.user!.userId, "submit_property", {
+    entityType: "property", entityId: id, entityName: existing.ownerName,
+  });
   res.json(serializeProperty(updated, null));
 });
 
@@ -435,6 +449,11 @@ router.post("/properties/:id/approve", requireAuth, requireRole("admin", "city_o
     .returning();
 
   await db.insert(approvalsTable).values({ propertyId: params.data.id, action, actorId: req.user!.userId, remark });
+  await auditReq(req, req.user!.userId, newStatus === "approved" ? "approve_property" : "verify_property", {
+    entityType: "property", entityId: params.data.id, entityName: existing.ownerName,
+    oldValue: existing.status, newValue: newStatus,
+    details: remark ?? null,
+  });
   res.json(serializeProperty(updated, null));
 });
 
@@ -456,6 +475,11 @@ router.post("/properties/:id/reject", requireAuth, requireRole("admin", "city_of
   if (!updated) { res.status(404).json({ error: "Property not found" }); return; }
 
   await db.insert(approvalsTable).values({ propertyId: params.data.id, action: "rejected", actorId: req.user!.userId, remark: parsed.data.remark });
+  await auditReq(req, req.user!.userId, "reject_property", {
+    entityType: "property", entityId: params.data.id, entityName: updated.ownerName,
+    oldValue: "pending_or_verified", newValue: "rejected",
+    details: parsed.data.remark,
+  });
   res.json(serializeProperty(updated, null));
 });
 
@@ -481,6 +505,10 @@ router.post("/properties/:id/resubmit", requireAuth, async (req, res): Promise<v
     .returning();
 
   await db.insert(approvalsTable).values({ propertyId: params.data.id, action: "resubmitted", actorId: req.user!.userId });
+  await auditReq(req, req.user!.userId, "resubmit_property", {
+    entityType: "property", entityId: params.data.id, entityName: existing.ownerName,
+    oldValue: "rejected", newValue: "pending",
+  });
   res.json(serializeProperty(updated, null));
 });
 

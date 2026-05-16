@@ -18,6 +18,7 @@ import Users from "@/pages/users";
 import LocationsSetup from "@/pages/setup/locations";
 import StreetsSetup from "@/pages/setup/streets";
 import BlocksSetup from "@/pages/setup/blocks";
+import AuditLogs from "@/pages/audit-logs";
 
 import 'leaflet/dist/leaflet.css';
 
@@ -47,6 +48,7 @@ function ProtectedRoutes() {
       <Route path="/setup/locations" component={LocationsSetup} />
       <Route path="/setup/streets" component={StreetsSetup} />
       <Route path="/setup/blocks" component={BlocksSetup} />
+      <Route path="/audit-logs" component={AuditLogs} />
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>

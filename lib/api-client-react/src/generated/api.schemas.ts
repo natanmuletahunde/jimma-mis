@@ -553,6 +553,56 @@ export interface BlockInput {
   status?: BlockInputStatus;
 }
 
+export interface AuditLog {
+  id: number;
+  /** @nullable */
+  userId?: number | null;
+  /** @nullable */
+  userName?: string | null;
+  /** @nullable */
+  userRole?: string | null;
+  action: string;
+  /** @nullable */
+  entityType?: string | null;
+  /** @nullable */
+  entityId?: number | null;
+  /** @nullable */
+  entityName?: string | null;
+  /** @nullable */
+  oldValue?: string | null;
+  /** @nullable */
+  newValue?: string | null;
+  /** @nullable */
+  ipAddress?: string | null;
+  /** @nullable */
+  deviceInfo?: string | null;
+  /** @nullable */
+  details?: string | null;
+  createdAt: string;
+}
+
+export interface AuditLogList {
+  logs: AuditLog[];
+  hasMore: boolean;
+}
+
+export interface AuditLogSummary {
+  total: number;
+  today: number;
+  logins: number;
+  propertyChanges: number;
+  approvalActions: number;
+  userManagement: number;
+  reportExports: number;
+}
+
+export interface TrackAuditEventInput {
+  action: string;
+  entityType?: string;
+  entityName?: string;
+  details?: string;
+}
+
 export type ListUsersParams = {
 role?: string;
 search?: string;
@@ -627,5 +677,17 @@ kebele_id?: number;
 street_id?: number;
 status?: string;
 search?: string;
+};
+
+export type ListAuditLogsParams = {
+action?: string;
+entity_type?: string;
+from_date?: string;
+to_date?: string;
+user_id?: number;
+role?: string;
+search?: string;
+limit?: number;
+offset?: number;
 };
 

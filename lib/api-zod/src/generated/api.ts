@@ -1106,3 +1106,89 @@ export const DeleteBlockParams = zod.object({
 })
 
 
+/**
+ * @summary Get audit log activity summary
+ */
+export const GetAuditLogsSummaryResponse = zod.object({
+  "total": zod.number(),
+  "today": zod.number(),
+  "logins": zod.number(),
+  "propertyChanges": zod.number(),
+  "approvalActions": zod.number(),
+  "userManagement": zod.number(),
+  "reportExports": zod.number()
+})
+
+
+/**
+ * @summary List audit logs with optional filters
+ */
+export const ListAuditLogsQueryParams = zod.object({
+  "action": zod.coerce.string().optional(),
+  "entity_type": zod.coerce.string().optional(),
+  "from_date": zod.coerce.string().optional(),
+  "to_date": zod.coerce.string().optional(),
+  "user_id": zod.coerce.number().optional(),
+  "role": zod.coerce.string().optional(),
+  "search": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListAuditLogsResponse = zod.object({
+  "logs": zod.array(zod.object({
+  "id": zod.number(),
+  "userId": zod.number().nullish(),
+  "userName": zod.string().nullish(),
+  "userRole": zod.string().nullish(),
+  "action": zod.string(),
+  "entityType": zod.string().nullish(),
+  "entityId": zod.number().nullish(),
+  "entityName": zod.string().nullish(),
+  "oldValue": zod.string().nullish(),
+  "newValue": zod.string().nullish(),
+  "ipAddress": zod.string().nullish(),
+  "deviceInfo": zod.string().nullish(),
+  "details": zod.string().nullish(),
+  "createdAt": zod.string()
+})),
+  "hasMore": zod.boolean()
+})
+
+
+/**
+ * @summary Get a single audit log entry
+ */
+export const GetAuditLogParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetAuditLogResponse = zod.object({
+  "id": zod.number(),
+  "userId": zod.number().nullish(),
+  "userName": zod.string().nullish(),
+  "userRole": zod.string().nullish(),
+  "action": zod.string(),
+  "entityType": zod.string().nullish(),
+  "entityId": zod.number().nullish(),
+  "entityName": zod.string().nullish(),
+  "oldValue": zod.string().nullish(),
+  "newValue": zod.string().nullish(),
+  "ipAddress": zod.string().nullish(),
+  "deviceInfo": zod.string().nullish(),
+  "details": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Record a client-side audit event (e.g. CSV exports)
+ */
+export const TrackAuditEventBody = zod.object({
+  "action": zod.string(),
+  "entityType": zod.string().optional(),
+  "entityName": zod.string().optional(),
+  "details": zod.string().optional()
+})
+
+

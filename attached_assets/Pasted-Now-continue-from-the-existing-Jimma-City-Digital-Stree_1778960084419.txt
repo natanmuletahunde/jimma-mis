@@ -1,0 +1,156 @@
+Now continue from the existing Jimma City Digital Street Address MIS project.
+
+Your task is to build the Audit Logs and Activity Tracking module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Audit Log APIs
+
+Create or fix these endpoints:
+
+GET /api/audit-logs
+GET /api/audit-logs/:id
+GET /api/audit-logs/user/:userId
+GET /api/audit-logs/property/:propertyId
+GET /api/audit-logs/summary
+
+2. Audit Log Fields
+
+Each audit log should include:
+
+- id
+- user_id
+- user_name
+- user_role
+- action_type
+- entity_type
+- entity_id
+- entity_name
+- old_value
+- new_value
+- ip_address
+- device_info
+- remark
+- created_at
+
+3. Actions to Track
+
+Track:
+
+- login
+- logout
+- user created
+- user updated
+- user activated/deactivated
+- property created
+- property updated
+- property submitted
+- property verified
+- property approved
+- property rejected
+- photo uploaded
+- photo deleted
+- location created/updated/deleted
+- street created/updated/deleted
+- block created/updated/deleted
+- duplicate resolved
+- report exported
+
+4. Frontend Audit Logs Page
+
+Create route:
+
+/audit-logs
+
+Features:
+
+- audit log table
+- search by user, action, entity, remark
+- filter by date range
+- filter by user role
+- filter by action type
+- filter by entity type
+- filter by kebele if related to property
+- view audit detail modal
+
+5. Audit Summary Cards
+
+Show:
+
+- Total activities
+- Today’s activities
+- Login activities
+- Property changes
+- Approval actions
+- User management actions
+- Report exports
+
+6. Audit Detail Modal
+
+When user clicks a log:
+
+Show:
+
+- performed by
+- role
+- action
+- affected entity
+- date/time
+- old value
+- new value
+- IP address
+- device/browser info
+- remark
+
+7. Role Access
+
+Admin:
+- can view all audit logs
+
+City Officer:
+- can view property, approval, report, and location-related logs
+
+Kebele Officer:
+- can view logs related to assigned kebele only
+
+Enumerator:
+- can view logs related to their own submitted records only
+
+Viewer:
+- no access to audit logs unless explicitly allowed
+
+8. Sidebar
+
+Add Audit Logs menu item only for:
+
+- Admin
+- City Officer
+
+9. Export
+
+Allow Admin to export audit logs to CSV.
+
+CSV should respect current filters.
+
+10. Final Check
+
+After implementation, test:
+
+- login creates audit log
+- property create/update creates audit log
+- approval actions create audit log
+- user management actions create audit log
+- report export creates audit log
+- audit log page loads
+- filters work
+- detail modal works
+- CSV export works
+- role-based access works
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues
