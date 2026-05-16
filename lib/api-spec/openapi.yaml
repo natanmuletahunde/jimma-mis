@@ -343,6 +343,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/Property"
 
+  /properties/{id}/submit:
+    post:
+      operationId: submitProperty
+      tags: [properties]
+      summary: Submit a draft property for kebele verification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submitted property
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+        "400":
+          description: Validation error (missing GPS or photo)
+        "403":
+          description: Not allowed
+
   /properties/check-duplicate:
     get:
       operationId: checkDuplicate

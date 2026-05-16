@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   useCreateProperty,
+  useSubmitProperty,
   useCheckDuplicate,
   useListKebeles,
   useListStreets,
   getListStreetsQueryKey,
   getCheckDuplicateQueryKey,
 } from "@workspace/api-client-react";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +49,13 @@ import {
   Building2,
   User,
   Info,
+  Camera,
+  X,
+  Send,
+  Save,
 } from "lucide-react";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const propertySchema = z.object({
   houseNumber: z.string().optional(),
@@ -107,11 +115,32 @@ function AddressPreview({ kebele, streetName, blockCode, houseNumber }: {
   );
 }
 
+async function uploadPhoto(propertyId: number, file: File, token: string | null): Promise<void> {
+  const fd = new FormData();
+  fd.append("photo", file);
+  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photo`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: fd,
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? "Photo upload failed");
+  }
+}
+
 export default function NewProperty() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { token } = useAuth();
   const createProperty = useCreateProperty();
+  const submitProperty = useSubmitProperty();
+
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: kebeles = [], isLoading: kebelesLoading } = useListKebeles();
 
@@ -141,7 +170,6 @@ export default function NewProperty() {
 
   const hasGps = !!watchedLat && !!watchedLng;
   const hasDupTrigger = hasGps || !!watchedHouseNumber;
-
   const dupParams = {
     latitude: watchedLat,
     longitude: watchedLng,
@@ -176,6 +204,24 @@ export default function NewProperty() {
     );
   };
 
+  const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ variant: "destructive", title: "Invalid File", description: "Please select an image file." });
+      return;
+    }
+    setPhotoFile(file);
+    const url = URL.createObjectURL(file);
+    setPhotoPreview(url);
+  };
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const onKebeleChange = (kebeleId: string) => {
     const id = parseInt(kebeleId, 10);
     const kebele = kebeles.find((k) => k.id === id);
@@ -192,24 +238,70 @@ export default function NewProperty() {
     form.setValue("streetName", street.name);
   };
 
-  const onSubmit = (data: PropertyFormValues) => {
+  const handleSaveDraft = async (data: PropertyFormValues) => {
     const { kebeleId: _unused, ...payload } = data;
-    createProperty.mutate(
-      { data: payload },
-      {
-        onSuccess: (property) => {
-          toast({ title: "Property Registered", description: "Record submitted for kebele verification." });
-          setLocation(`/properties/${property.id}`);
-        },
-        onError: () => {
-          toast({ variant: "destructive", title: "Error", description: "Failed to register property. Please try again." });
-        },
+    setSaving(true);
+    try {
+      const property = await new Promise<{ id: number }>((resolve, reject) => {
+        createProperty.mutate(
+          { data: payload },
+          { onSuccess: resolve, onError: reject }
+        );
+      });
+      if (photoFile) {
+        try {
+          await uploadPhoto(property.id, photoFile, token ?? null);
+        } catch {
+          toast({ variant: "destructive", title: "Photo Upload Failed", description: "Draft saved but photo could not be uploaded." });
+        }
       }
-    );
+      toast({ title: "Draft Saved", description: "Property saved as draft. Add GPS and photo before submitting." });
+      setLocation(`/properties/${property.id}`);
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save draft. Please try again." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmitForVerification = async (data: PropertyFormValues) => {
+    if (!hasGps) {
+      toast({ variant: "destructive", title: "GPS Required", description: "Capture GPS coordinates before submitting." });
+      return;
+    }
+    if (!photoFile) {
+      toast({ variant: "destructive", title: "Photo Required", description: "Upload a property photo before submitting." });
+      return;
+    }
+    const { kebeleId: _unused, ...payload } = data;
+    setSaving(true);
+    try {
+      const property = await new Promise<{ id: number }>((resolve, reject) => {
+        createProperty.mutate(
+          { data: payload },
+          { onSuccess: resolve, onError: reject }
+        );
+      });
+      await uploadPhoto(property.id, photoFile, token ?? null);
+      await new Promise<void>((resolve, reject) => {
+        submitProperty.mutate(
+          { id: property.id },
+          { onSuccess: () => resolve(), onError: reject }
+        );
+      });
+      toast({ title: "Submitted for Verification", description: "Property has been sent to the Kebele Officer." });
+      setLocation(`/properties/${property.id}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to submit. Please try again.";
+      toast({ variant: "destructive", title: "Submission Error", description: msg });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const selectedKebele = kebeles.find((k) => k.code === watchedKebele);
   const isCommercial = watchedType === "commercial";
+  const isBusy = saving || createProperty.isPending || submitProperty.isPending;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
@@ -217,7 +309,7 @@ export default function NewProperty() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Register New Property</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Complete all required fields and capture GPS coordinates for GIS mapping.
+            Fill in all required fields. Save as draft or submit directly for verification.
           </p>
         </div>
         {watchedType && (
@@ -228,7 +320,7 @@ export default function NewProperty() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form className="space-y-6">
 
           {/* Section 1: Location */}
           <Card>
@@ -241,7 +333,6 @@ export default function NewProperty() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Kebele dropdown */}
                 <FormField
                   control={form.control}
                   name="kebele"
@@ -271,7 +362,6 @@ export default function NewProperty() {
                   )}
                 />
 
-                {/* Street dropdown */}
                 <FormField
                   control={form.control}
                   name="streetName"
@@ -301,7 +391,6 @@ export default function NewProperty() {
                   )}
                 />
 
-                {/* House number */}
                 <FormField
                   control={form.control}
                   name="houseNumber"
@@ -316,7 +405,6 @@ export default function NewProperty() {
                   )}
                 />
 
-                {/* Block code */}
                 <FormField
                   control={form.control}
                   name="blockCode"
@@ -351,14 +439,13 @@ export default function NewProperty() {
                   )}
                 </div>
 
-                {/* Manual coordinate inputs */}
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
                     name="latitude"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs text-muted-foreground">Latitude (manual entry)</FormLabel>
+                        <FormLabel className="text-xs text-muted-foreground">Latitude (manual)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -377,7 +464,7 @@ export default function NewProperty() {
                     name="longitude"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs text-muted-foreground">Longitude (manual entry)</FormLabel>
+                        <FormLabel className="text-xs text-muted-foreground">Longitude (manual)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -585,7 +672,7 @@ export default function NewProperty() {
                       name="businessName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Business Name</FormLabel>
+                          <FormLabel>Business Name *</FormLabel>
                           <FormControl>
                             <Input placeholder="Registered business name" {...field} value={field.value ?? ""} />
                           </FormControl>
@@ -632,21 +719,94 @@ export default function NewProperty() {
             </CardContent>
           </Card>
 
+          {/* Section 4: Photo Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-primary" />
+                <CardTitle className="text-base">Property Photo</CardTitle>
+              </div>
+              <CardDescription>
+                A photo is required before submitting for verification.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onPhotoChange}
+              />
+              {photoPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={photoPreview}
+                    alt="Property preview"
+                    className="rounded-lg border object-cover max-h-64 max-w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={clearPhoto}
+                    className="absolute top-2 right-2 bg-destructive text-white rounded-full p-1 shadow hover:bg-destructive/90"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-2">{photoFile?.name}</p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center w-full border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
+                >
+                  <Camera className="w-8 h-8 mb-2" />
+                  <span className="text-sm font-medium">Click to upload photo</span>
+                  <span className="text-xs mt-1">JPG, PNG, WEBP up to 10 MB</span>
+                </button>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Info note */}
           <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/40 border rounded-md px-4 py-3">
             <Info className="w-4 h-4 mt-0.5 shrink-0" />
             <span>
-              After submission, this record is sent to the Kebele Officer for verification, then to the City Officer for final approval and address code generation.
+              <strong>Save Draft</strong> — saves immediately without GPS or photo requirement. You can finish and submit later.
+              <br />
+              <strong>Submit for Verification</strong> — requires GPS and photo; sends to Kebele Officer.
             </span>
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setLocation("/properties")}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLocation("/properties")}
+              disabled={isBusy}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={createProperty.isPending}>
-              {createProperty.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Submit Registration
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isBusy}
+              onClick={form.handleSubmit(handleSaveDraft)}
+            >
+              {isBusy && saving && !submitProperty.isPending
+                ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                : <Save className="w-4 h-4 mr-2" />}
+              Save Draft
+            </Button>
+            <Button
+              type="button"
+              disabled={isBusy}
+              onClick={form.handleSubmit(handleSubmitForVerification)}
+            >
+              {isBusy && submitProperty.isPending
+                ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                : <Send className="w-4 h-4 mr-2" />}
+              Submit for Verification
             </Button>
           </div>
         </form>

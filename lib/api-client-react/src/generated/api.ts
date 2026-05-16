@@ -1247,6 +1247,76 @@ export const useResubmitProperty = <TError = ErrorType<unknown>,
       return useMutation(getResubmitPropertyMutationOptions(options));
     }
 
+export const getSubmitPropertyUrl = (id: number,) => {
+
+
+
+
+  return `/api/properties/${id}/submit`
+}
+
+/**
+ * @summary Submit a draft property for kebele verification
+ */
+export const submitProperty = async (id: number, options?: RequestInit): Promise<Property> => {
+
+  return customFetch<Property>(getSubmitPropertyUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSubmitPropertyMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProperty>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitProperty>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['submitProperty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitProperty>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  submitProperty(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitPropertyMutationResult = NonNullable<Awaited<ReturnType<typeof submitProperty>>>
+
+    export type SubmitPropertyMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit a draft property for kebele verification
+ */
+export const useSubmitProperty = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitProperty>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitProperty>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getSubmitPropertyMutationOptions(options));
+    }
+
 export const getCheckDuplicateUrl = (params?: CheckDuplicateParams,) => {
   const normalizedParams = new URLSearchParams();
 

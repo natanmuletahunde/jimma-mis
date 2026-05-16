@@ -473,6 +473,47 @@ export const ResubmitPropertyResponse = zod.object({
 
 
 /**
+ * @summary Submit a draft property for kebele verification
+ */
+export const SubmitPropertyParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SubmitPropertyResponse = zod.object({
+  "id": zod.number(),
+  "addressCode": zod.string().nullish(),
+  "houseNumber": zod.string().nullish(),
+  "buildingName": zod.string().nullish(),
+  "propertyType": zod.enum(['residential', 'commercial', 'government', 'institution', 'mixed']),
+  "ownershipType": zod.union([zod.literal('private'),zod.literal('government'),zod.literal('institutional'),zod.literal(null)]).nullish(),
+  "ownerName": zod.string(),
+  "ownerPhone": zod.string().nullish(),
+  "occupantName": zod.string().nullish(),
+  "occupantPhone": zod.string().nullish(),
+  "businessName": zod.string().nullish(),
+  "businessLicenseNumber": zod.string().nullish(),
+  "numberOfFloors": zod.number().nullish(),
+  "buildingUse": zod.string().nullish(),
+  "kebele": zod.string(),
+  "streetName": zod.string(),
+  "blockCode": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "propertyPhoto": zod.string().nullish(),
+  "status": zod.enum(['draft', 'pending', 'kebele_verified', 'approved', 'rejected']),
+  "remark": zod.string().nullish(),
+  "createdBy": zod.number().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional(),
+  "createdByUser": zod.object({
+  "id": zod.number().optional(),
+  "fullName": zod.string().optional(),
+  "role": zod.string().optional()
+}).optional()
+})
+
+
+/**
  * @summary Check for duplicate GPS or house number
  */
 export const CheckDuplicateQueryParams = zod.object({

@@ -1,0 +1,203 @@
+Now continue from the existing working backend.
+
+Your task is to build and connect the Property Registration module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Property APIs
+
+Create or fix these endpoints:
+
+GET /api/properties
+GET /api/properties/:id
+POST /api/properties
+PUT /api/properties/:id
+DELETE /api/properties/:id
+POST /api/properties/:id/submit
+
+2. Property Creation Rules
+
+When creating a property, save:
+
+- house_number
+- building_name
+- property_type
+- ownership_type
+- owner_name
+- owner_phone
+- occupant_name
+- occupant_phone
+- business_name
+- business_license_number
+- number_of_floors
+- building_use
+- kebele
+- street_name
+- block_code
+- latitude
+- longitude
+- property_photo
+- remark
+- created_by
+
+Default status should be:
+Draft
+
+3. Address Code
+
+Generate a temporary address code during draft creation.
+
+Format:
+JIM-KB{KebeleCode}-ST{StreetCode}-BL{BlockCode}-HN{HouseNumber}
+
+Example:
+JIM-KB01-ST003-BL02-HN045
+
+If kebele code or street code is missing, generate a readable temporary code using available values.
+
+4. Validation
+
+Add backend validation:
+
+- house_number is required
+- property_type is required
+- kebele is required
+- street_name is required
+- block_code is required
+- owner_name is required for private property
+- business_name is required for commercial property
+- latitude and longitude are required before submit
+- property_photo is required before submit
+
+5. Duplicate Check
+
+Prevent duplicate house number for the same:
+- kebele
+- street_name
+- block_code
+- house_number
+
+Add warning or error for GPS points that are very close to an existing property.
+
+6. Submit Workflow
+
+POST /api/properties/:id/submit should:
+
+- only allow Draft or Rejected records to be submitted
+- check GPS and photo exist
+- change status to Submitted
+- create approval/audit log entry
+- return updated property
+
+7. Frontend Property Registration Page
+
+Create or improve mobile-responsive React page:
+
+Route:
+/properties/new
+
+Fields:
+- Kebele
+- Street Name
+- Block Code
+- House Number
+- Building Name
+- Property Type
+- Ownership Type
+- Owner Name
+- Owner Phone
+- Occupant Name
+- Occupant Phone
+- Business Name
+- Business License Number
+- Number of Floors
+- Building Use
+- GPS Latitude
+- GPS Longitude
+- Property Photo
+- Remark
+
+Buttons:
+- Capture GPS
+- Upload Photo
+- Save Draft
+- Submit for Verification
+
+8. GPS Capture
+
+Use browser geolocation.
+
+When user clicks Capture GPS:
+- request location permission
+- save latitude and longitude into form
+- show GPS success message
+- show error message if permission is denied
+
+9. Photo Upload
+
+Allow image upload.
+Show preview before saving.
+Store uploaded image path in backend.
+
+10. Property List Page
+
+Create or improve:
+
+Route:
+/properties
+
+Features:
+- table of properties
+- search by owner name, house number, address code
+- filter by kebele
+- filter by property type
+- filter by status
+- action button to view detail
+
+11. Property Detail Page
+
+Create or improve:
+
+Route:
+/properties/:id
+
+Show:
+- full property profile
+- photo
+- GPS
+- address code
+- status
+- approval history if available
+
+12. Role Control
+
+Enumerator can:
+- create draft
+- edit own Draft or Rejected records
+- submit records
+
+Kebele Officer can:
+- view submitted records
+
+City Officer and Admin can:
+- view all records
+
+13. Final Check
+
+After implementation, test:
+
+- create property draft
+- capture GPS
+- upload photo
+- submit for verification
+- duplicate house number prevention
+- property list display
+- property detail display
+
+Provide:
+- files changed
+- APIs created
+- how to test
+- known issues
