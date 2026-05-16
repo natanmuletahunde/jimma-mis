@@ -55,6 +55,8 @@ import {
   X,
   Send,
   Save,
+  Plus,
+  ImageIcon,
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -121,10 +123,34 @@ function AddressPreview({ kebeleCode, streetName, blockCode, houseNumber }: {
   );
 }
 
-async function uploadPhoto(propertyId: number, file: File, token: string | null): Promise<void> {
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_SIZE_MB = 5;
+
+const PHOTO_CATEGORIES = [
+  { value: "front_view", label: "Front View" },
+  { value: "side_view", label: "Side View" },
+  { value: "business_sign", label: "Business Sign" },
+  { value: "document", label: "Document / Evidence" },
+  { value: "other", label: "Other" },
+];
+
+interface PendingPhoto {
+  id: string;
+  file: File;
+  category: string;
+  preview: string;
+}
+
+async function uploadPhotoWithCategory(
+  propertyId: number,
+  file: File,
+  category: string,
+  token: string | null,
+): Promise<void> {
   const fd = new FormData();
   fd.append("photo", file);
-  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photo`, {
+  fd.append("category", category);
+  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photos`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: fd,
@@ -143,10 +169,11 @@ export default function NewProperty() {
   const submitProperty = useSubmitProperty();
 
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedStreetId, setSelectedStreetId] = useState<number | undefined>(undefined);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
+  const [addCategory, setAddCategory] = useState("front_view");
+  const [uploadingCount, setUploadingCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: kebeles = [], isLoading: kebelesLoading } = useListKebeles();
@@ -219,19 +246,27 @@ export default function NewProperty() {
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast({ variant: "destructive", title: "Invalid File", description: "Please select an image file." });
+    e.target.value = "";
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({ variant: "destructive", title: "Invalid File Type", description: "Only JPG, PNG, and WEBP images are allowed." });
       return;
     }
-    setPhotoFile(file);
-    const url = URL.createObjectURL(file);
-    setPhotoPreview(url);
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast({ variant: "destructive", title: "File Too Large", description: `Photos must be ${MAX_SIZE_MB} MB or smaller.` });
+      return;
+    }
+    setPendingPhotos((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), file, category: addCategory, preview: URL.createObjectURL(file) },
+    ]);
   };
 
-  const clearPhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removePendingPhoto = (id: string) => {
+    setPendingPhotos((prev) => {
+      const p = prev.find((x) => x.id === id);
+      if (p) URL.revokeObjectURL(p.preview);
+      return prev.filter((x) => x.id !== id);
+    });
   };
 
   const onKebeleChange = (kebeleId: string) => {
@@ -264,11 +299,20 @@ export default function NewProperty() {
           { onSuccess: resolve, onError: reject }
         );
       });
-      if (photoFile) {
-        try {
-          await uploadPhoto(property.id, photoFile, token ?? null);
-        } catch {
-          toast({ variant: "destructive", title: "Photo Upload Failed", description: "Draft saved but photo could not be uploaded." });
+      if (pendingPhotos.length > 0) {
+        setUploadingCount(pendingPhotos.length);
+        let failCount = 0;
+        for (const p of pendingPhotos) {
+          try {
+            await uploadPhotoWithCategory(property.id, p.file, p.category, token ?? null);
+          } catch {
+            failCount++;
+          } finally {
+            setUploadingCount((c) => c - 1);
+          }
+        }
+        if (failCount > 0) {
+          toast({ variant: "destructive", title: "Some Photos Failed", description: `Draft saved but ${failCount} photo(s) could not be uploaded.` });
         }
       }
       toast({ title: "Draft Saved", description: "Property saved as draft. Add GPS and photo before submitting." });
@@ -285,8 +329,9 @@ export default function NewProperty() {
       toast({ variant: "destructive", title: "GPS Required", description: "Capture GPS coordinates before submitting." });
       return;
     }
-    if (!photoFile) {
-      toast({ variant: "destructive", title: "Photo Required", description: "Upload a property photo before submitting." });
+    const hasFrontView = pendingPhotos.some((p) => p.category === "front_view");
+    if (!hasFrontView) {
+      toast({ variant: "destructive", title: "Front View Photo Required", description: "Add at least one Front View photo before submitting." });
       return;
     }
     const { kebeleId: _unused, ...payload } = data;
@@ -298,7 +343,17 @@ export default function NewProperty() {
           { onSuccess: resolve, onError: reject }
         );
       });
-      await uploadPhoto(property.id, photoFile, token ?? null);
+      // Upload all pending photos
+      setUploadingCount(pendingPhotos.length);
+      for (const p of pendingPhotos) {
+        try {
+          await uploadPhotoWithCategory(property.id, p.file, p.category, token ?? null);
+        } catch {
+          // individual failure — continue uploading others
+        } finally {
+          setUploadingCount((c) => c - 1);
+        }
+      }
       await new Promise<void>((resolve, reject) => {
         submitProperty.mutate(
           { id: property.id },
@@ -312,6 +367,7 @@ export default function NewProperty() {
       toast({ variant: "destructive", title: "Submission Error", description: msg });
     } finally {
       setSaving(false);
+      setUploadingCount(0);
     }
   };
 
@@ -755,35 +811,79 @@ export default function NewProperty() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Camera className="w-4 h-4 text-primary" />
-                <CardTitle className="text-base">Property Photo</CardTitle>
+                <CardTitle className="text-base">Property Photos</CardTitle>
               </div>
               <CardDescription>
-                A photo is required before submitting for verification.
+                At least one <strong>Front View</strong> photo is required before submitting.
+                JPG, PNG, WEBP · max {MAX_SIZE_MB} MB each.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={onPhotoChange}
               />
-              {photoPreview ? (
-                <div className="relative inline-block">
-                  <img
-                    src={photoPreview}
-                    alt="Property preview"
-                    className="rounded-lg border object-cover max-h-64 max-w-full"
-                  />
-                  <button
-                    type="button"
-                    onClick={clearPhoto}
-                    className="absolute top-2 right-2 bg-destructive text-white rounded-full p-1 shadow hover:bg-destructive/90"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <p className="text-xs text-muted-foreground mt-2">{photoFile?.name}</p>
+
+              {/* Add photo controls */}
+              <div className="flex gap-2 flex-wrap">
+                <select
+                  value={addCategory}
+                  onChange={(e) => setAddCategory(e.target.value)}
+                  className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {PHOTO_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-dashed border-primary/50 text-primary text-sm hover:bg-primary/5 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Photo
+                </button>
+              </div>
+
+              {/* Upload progress indicator */}
+              {uploadingCount > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading {uploadingCount} photo{uploadingCount > 1 ? "s" : ""}…
+                </div>
+              )}
+
+              {/* Pending photos list */}
+              {pendingPhotos.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {pendingPhotos.map((p) => {
+                    const catLabel = PHOTO_CATEGORIES.find((c) => c.value === p.category)?.label ?? p.category;
+                    return (
+                      <div key={p.id} className="relative group rounded-lg border overflow-hidden bg-muted/20">
+                        <img
+                          src={p.preview}
+                          alt={catLabel}
+                          className="w-full h-28 object-cover"
+                        />
+                        <div className="px-2 py-1 text-xs font-medium truncate bg-background/80 backdrop-blur-sm border-t">
+                          {catLabel}
+                          {p.category === "front_view" && (
+                            <span className="ml-1 text-primary">★</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePendingPhoto(p.id)}
+                          className="absolute top-1.5 right-1.5 bg-destructive/90 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <button
@@ -791,10 +891,18 @@ export default function NewProperty() {
                   onClick={() => fileInputRef.current?.click()}
                   className="flex flex-col items-center justify-center w-full border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors cursor-pointer"
                 >
-                  <Camera className="w-8 h-8 mb-2" />
-                  <span className="text-sm font-medium">Click to upload photo</span>
-                  <span className="text-xs mt-1">JPG, PNG, WEBP up to 10 MB</span>
+                  <ImageIcon className="w-8 h-8 mb-2" />
+                  <span className="text-sm font-medium">Click to add a Front View photo</span>
+                  <span className="text-xs mt-1">JPG, PNG, WEBP · max {MAX_SIZE_MB} MB</span>
                 </button>
+              )}
+
+              {/* Front view requirement hint */}
+              {pendingPhotos.length > 0 && !pendingPhotos.some((p) => p.category === "front_view") && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  No Front View photo yet — required before submitting.
+                </p>
               )}
             </CardContent>
           </Card>

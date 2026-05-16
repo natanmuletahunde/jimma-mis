@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import multer from "multer";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -43,7 +44,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 const uploadsDir = path.resolve(__dirname, "../uploads");
-app.use("/uploads", express.static(uploadsDir));
+app.use("/api/uploads", express.static(uploadsDir));
 
 app.use("/api", router);
 
@@ -52,6 +53,17 @@ app.use((_req: Request, res: Response) => {
 });
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  // Multer errors (file size, unexpected field, etc.) → 400
+  if (err instanceof multer.MulterError) {
+    const msg = err.code === "LIMIT_FILE_SIZE" ? "File too large. Maximum size is 5 MB." : err.message;
+    res.status(400).json({ error: msg });
+    return;
+  }
+  // Custom fileFilter errors (wrong file type) → 400
+  if (err instanceof Error && (err.message.includes("Only JPG") || err.message.includes("images are allowed"))) {
+    res.status(400).json({ error: err.message });
+    return;
+  }
   const message = err instanceof Error ? err.message : "Internal server error";
   logger.error({ err }, "Unhandled error");
   res.status(500).json({ error: message });

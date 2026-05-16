@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import { Router } from "express";
 import multer from "multer";
-import { db, propertiesTable, approvalsTable, usersTable } from "@workspace/db";
+import { db, propertiesTable, approvalsTable, usersTable, propertyPhotosTable } from "@workspace/db";
 import { eq, and, ilike, or, sql, ne, desc } from "drizzle-orm";
 import {
   ListPropertiesQueryParams,
@@ -22,7 +22,7 @@ import {
 import { requireAuth, requireRole } from "../middlewares/auth";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(__dirname, "../../uploads");
+const uploadsDir = path.resolve(__dirname, "../uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -299,8 +299,14 @@ router.post("/properties/:id/submit", requireAuth, async (req, res): Promise<voi
     return;
   }
 
-  if (!existing.propertyPhoto) {
-    res.status(400).json({ error: "A property photo is required before submitting" });
+  // Accept either a legacy propertyPhoto OR a front_view entry in property_photos
+  const [frontViewPhoto] = await db
+    .select({ id: propertyPhotosTable.id })
+    .from(propertyPhotosTable)
+    .where(and(eq(propertyPhotosTable.propertyId, id), eq(propertyPhotosTable.photoCategory, "front_view")))
+    .limit(1);
+  if (!existing.propertyPhoto && !frontViewPhoto) {
+    res.status(400).json({ error: "A front view photo is required before submitting" });
     return;
   }
 
@@ -315,7 +321,8 @@ router.post("/properties/:id/submit", requireAuth, async (req, res): Promise<voi
   res.json(serializeProperty(updated, null));
 });
 
-// ─── Photo upload ─────────────────────────────────────────────────────────────
+// ─── Legacy single-photo upload (kept for backward compatibility) ──────────────
+// New code should use POST /properties/:id/photos (photos.ts router)
 
 router.post("/properties/:id/photo", requireAuth, upload.single("photo"), async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -327,10 +334,21 @@ router.post("/properties/:id/photo", requireAuth, upload.single("photo"), async 
     return;
   }
 
-  const [existing] = await db.select({ id: propertiesTable.id }).from(propertiesTable).where(eq(propertiesTable.id, id));
+  const [existing] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Property not found" }); return; }
 
   const photoPath = `/uploads/${req.file.filename}`;
+
+  // Also record in property_photos for gallery visibility
+  await db.insert(propertyPhotosTable).values({
+    propertyId: id,
+    photoUrl: photoPath,
+    fileName: req.file.originalname,
+    fileType: req.file.mimetype,
+    photoCategory: "front_view",
+    uploadedBy: req.user!.userId,
+  });
+
   const [updated] = await db
     .update(propertiesTable)
     .set({ propertyPhoto: photoPath })

@@ -9,7 +9,7 @@ import {
   useResubmitProperty,
   useSubmitProperty,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,9 @@ import {
   X,
   Clock,
   History,
+  Plus,
+  Trash2,
+  ImageIcon,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -42,10 +45,47 @@ import { Label } from "@/components/ui/label";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-async function uploadPhoto(propertyId: number, file: File, token: string | null): Promise<void> {
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_SIZE_MB = 5;
+
+const PHOTO_CATEGORIES = [
+  { value: "front_view", label: "Front View" },
+  { value: "side_view", label: "Side View" },
+  { value: "business_sign", label: "Business Sign" },
+  { value: "document", label: "Document / Evidence" },
+  { value: "other", label: "Other" },
+];
+
+interface PropertyPhoto {
+  id: number;
+  propertyId: number;
+  photoUrl: string;
+  fileName: string | null;
+  fileType: string | null;
+  photoCategory: string;
+  uploadedBy: number | null;
+  uploaderName: string | null;
+  createdAt: string;
+}
+
+async function fetchPhotos(propertyId: number, token: string | null): Promise<PropertyPhoto[]> {
+  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photos`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!resp.ok) return [];
+  return resp.json() as Promise<PropertyPhoto[]>;
+}
+
+async function uploadPhotoWithCategory(
+  propertyId: number,
+  file: File,
+  category: string,
+  token: string | null,
+): Promise<void> {
   const fd = new FormData();
   fd.append("photo", file);
-  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photo`, {
+  fd.append("category", category);
+  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photos`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: fd,
@@ -53,6 +93,17 @@ async function uploadPhoto(propertyId: number, file: File, token: string | null)
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error((err as { error?: string }).error ?? "Photo upload failed");
+  }
+}
+
+async function deletePhoto(propertyId: number, photoId: number, token: string | null): Promise<void> {
+  const resp = await fetch(`${BASE}/api/properties/${propertyId}/photos/${photoId}`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? "Delete failed");
   }
 }
 
@@ -95,10 +146,17 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
 
   const [remark, setRemark] = useState("");
   const [isRejectOpen, setIsRejectOpen] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [addCategory, setAddCategory] = useState("front_view");
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const photosQuery = useQuery({
+    queryKey: ["propertyPhotos", propertyId],
+    queryFn: () => fetchPhotos(propertyId, token ?? null),
+    enabled: !!propertyId,
+  });
+  const photos = photosQuery.data ?? [];
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (error || !property) return <div className="p-8 text-destructive">Failed to load property details.</div>;
@@ -193,7 +251,7 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
       toast({ variant: "destructive", title: "GPS Required", description: "Edit the property to add GPS coordinates first." });
       return;
     }
-    if (!property.propertyPhoto && !photoFile) {
+    if (!property.propertyPhoto && photos.length === 0) {
       toast({ variant: "destructive", title: "Photo Required", description: "Upload a property photo before submitting." });
       return;
     }
@@ -212,21 +270,23 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
     );
   };
 
-  const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  };
-
-  const handleUploadPhoto = async () => {
-    if (!photoFile) return;
+    e.target.value = "";
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({ variant: "destructive", title: "Invalid File Type", description: "Only JPG, PNG, and WEBP are allowed." });
+      return;
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast({ variant: "destructive", title: "File Too Large", description: `Photos must be ${MAX_SIZE_MB} MB or smaller.` });
+      return;
+    }
     setPhotoUploading(true);
     try {
-      await uploadPhoto(propertyId, photoFile, token ?? null);
-      toast({ title: "Photo Uploaded", description: "Property photo saved." });
-      setPhotoFile(null);
-      setPhotoPreview(null);
+      await uploadPhotoWithCategory(propertyId, file, addCategory, token ?? null);
+      toast({ title: "Photo Uploaded", description: "Photo has been saved." });
+      void photosQuery.refetch();
       invalidateAll();
     } catch (err) {
       toast({ variant: "destructive", title: "Upload Error", description: err instanceof Error ? err.message : "Upload failed" });
@@ -235,11 +295,19 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
     }
   };
 
-  const photoSrc = property.propertyPhoto
-    ? property.propertyPhoto.startsWith("http")
-      ? property.propertyPhoto
-      : `${BASE}/api${property.propertyPhoto}`
-    : null;
+  const handleDeletePhoto = async (photo: PropertyPhoto) => {
+    setDeletingPhotoId(photo.id);
+    try {
+      await deletePhoto(propertyId, photo.id, token ?? null);
+      toast({ title: "Photo Deleted" });
+      void photosQuery.refetch();
+      invalidateAll();
+    } catch (err) {
+      toast({ variant: "destructive", title: "Delete Error", description: err instanceof Error ? err.message : "Could not delete photo" });
+    } finally {
+      setDeletingPhotoId(null);
+    }
+  };
 
   const canUploadPhoto = (status === "draft" || status === "rejected") && (role === "enumerator" || role === "admin");
 
@@ -395,49 +463,101 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
 
-        {/* Photo */}
-        <Card>
-          <CardHeader><CardTitle>Property Photo</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {photoSrc ? (
-              <img
-                src={photoSrc}
-                alt="Property"
-                className="rounded-lg border object-cover w-full max-h-56"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-32 bg-muted rounded-lg border border-dashed text-muted-foreground text-sm gap-2">
-                <Camera className="w-5 h-5" /> No photo uploaded
-              </div>
-            )}
-
-            {canUploadPhoto && (
-              <div className="space-y-2">
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onPhotoChange} />
-                {photoPreview ? (
-                  <div className="space-y-2">
-                    <div className="relative inline-block">
-                      <img src={photoPreview} alt="Preview" className="rounded-lg border max-h-40 object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                        className="absolute top-1 right-1 bg-destructive text-white rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <Button size="sm" onClick={handleUploadPhoto} disabled={photoUploading}>
-                      {photoUploading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Camera className="w-3.5 h-3.5 mr-1.5" />}
-                      Save Photo
-                    </Button>
-                  </div>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Camera className="w-3.5 h-3.5 mr-1.5" />
-                    {photoSrc ? "Replace Photo" : "Upload Photo"}
-                  </Button>
+        {/* Photo Gallery */}
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-4 h-4" /> Property Photos
+                {photos.length > 0 && (
+                  <Badge variant="secondary">{photos.length}</Badge>
                 )}
+              </CardTitle>
+              {canUploadPhoto && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={addCategory}
+                    onChange={(e) => setAddCategory(e.target.value)}
+                    className="h-8 rounded-md border border-input bg-background px-2 text-xs shadow-sm focus:outline-none"
+                  >
+                    {PHOTO_CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={photoUploading}
+                  >
+                    {photoUploading
+                      ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+                    Add Photo
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={onPhotoChange}
+                  />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {photosQuery.isLoading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : photos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-28 bg-muted rounded-lg border border-dashed text-muted-foreground text-sm gap-2">
+                <ImageIcon className="w-6 h-6" />
+                No photos uploaded yet
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {photos.map((photo) => {
+                  const catLabel = PHOTO_CATEGORIES.find((c) => c.value === photo.photoCategory)?.label ?? photo.photoCategory;
+                  const src = photo.photoUrl.startsWith("http")
+                    ? photo.photoUrl
+                    : `${BASE}/api${photo.photoUrl}`;
+                  const isDeleting = deletingPhotoId === photo.id;
+                  return (
+                    <div key={photo.id} className="relative group rounded-lg border overflow-hidden bg-muted/20">
+                      <img
+                        src={src}
+                        alt={catLabel}
+                        className="w-full h-32 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <div className="px-2 py-1 bg-background/90 backdrop-blur-sm border-t flex items-center justify-between gap-1">
+                        <span className="text-xs font-medium truncate">
+                          {catLabel}
+                          {photo.photoCategory === "front_view" && (
+                            <span className="ml-1 text-primary text-[10px]">★</span>
+                          )}
+                        </span>
+                      </div>
+                      {role === "admin" && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePhoto(photo)}
+                          disabled={isDeleting}
+                          className="absolute top-1.5 right-1.5 bg-destructive/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow disabled:opacity-50"
+                          title="Delete photo"
+                        >
+                          {isDeleting
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Trash2 className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
