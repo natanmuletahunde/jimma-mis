@@ -393,8 +393,11 @@ export const RejectPropertyParams = zod.object({
   "id": zod.coerce.number()
 })
 
+
+
+
 export const RejectPropertyBody = zod.object({
-  "remark": zod.string()
+  "remark": zod.string().min(1)
 })
 
 export const RejectPropertyResponse = zod.object({
@@ -511,6 +514,29 @@ export const SubmitPropertyResponse = zod.object({
   "role": zod.string().optional()
 }).optional()
 })
+
+
+/**
+ * @summary Get approval history for a property
+ */
+export const GetPropertyApprovalsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetPropertyApprovalsResponseItem = zod.object({
+  "id": zod.number(),
+  "propertyId": zod.number(),
+  "action": zod.string(),
+  "actorId": zod.number().nullish(),
+  "remark": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "actor": zod.object({
+  "id": zod.number().optional(),
+  "fullName": zod.string().optional(),
+  "role": zod.string().optional()
+}).optional()
+})
+export const GetPropertyApprovalsResponse = zod.array(GetPropertyApprovalsResponseItem)
 
 
 /**

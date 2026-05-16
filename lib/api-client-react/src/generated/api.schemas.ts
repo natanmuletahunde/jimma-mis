@@ -273,7 +273,20 @@ export interface ApprovalInput {
 }
 
 export interface RejectionInput {
+  /** @minLength 1 */
   remark: string;
+}
+
+export interface ApprovalRecord {
+  id: number;
+  propertyId: number;
+  action: string;
+  /** @nullable */
+  actorId?: number | null;
+  /** @nullable */
+  remark?: string | null;
+  createdAt: string;
+  actor?: UserSummary;
 }
 
 export interface MapProperty {

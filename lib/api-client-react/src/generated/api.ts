@@ -21,6 +21,7 @@ import type {
 
 import type {
   ApprovalInput,
+  ApprovalRecord,
   AuthResponse,
   CheckDuplicateParams,
   DashboardStats,
@@ -1316,6 +1317,83 @@ export const useSubmitProperty = <TError = ErrorType<void>,
       > => {
       return useMutation(getSubmitPropertyMutationOptions(options));
     }
+
+export const getGetPropertyApprovalsUrl = (id: number,) => {
+
+
+
+
+  return `/api/properties/${id}/approvals`
+}
+
+/**
+ * @summary Get approval history for a property
+ */
+export const getPropertyApprovals = async (id: number, options?: RequestInit): Promise<ApprovalRecord[]> => {
+
+  return customFetch<ApprovalRecord[]>(getGetPropertyApprovalsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPropertyApprovalsQueryKey = (id: number,) => {
+    return [
+    `/api/properties/${id}/approvals`
+    ] as const;
+    }
+
+
+export const getGetPropertyApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof getPropertyApprovals>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPropertyApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPropertyApprovalsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPropertyApprovals>>> = ({ signal }) => getPropertyApprovals(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPropertyApprovals>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPropertyApprovalsQueryResult = NonNullable<Awaited<ReturnType<typeof getPropertyApprovals>>>
+export type GetPropertyApprovalsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get approval history for a property
+ */
+
+export function useGetPropertyApprovals<TData = Awaited<ReturnType<typeof getPropertyApprovals>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPropertyApprovals>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPropertyApprovalsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getCheckDuplicateUrl = (params?: CheckDuplicateParams,) => {
   const normalizedParams = new URLSearchParams();

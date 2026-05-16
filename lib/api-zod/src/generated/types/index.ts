@@ -7,6 +7,7 @@
  */
 
 export * from './approvalInput';
+export * from './approvalRecord';
 export * from './authResponse';
 export * from './checkDuplicateParams';
 export * from './dashboardStats';

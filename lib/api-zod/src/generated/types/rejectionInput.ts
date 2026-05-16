@@ -7,5 +7,6 @@
  */
 
 export interface RejectionInput {
+  /** @minLength 1 */
   remark: string;
 }

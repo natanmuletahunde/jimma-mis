@@ -1,0 +1,151 @@
+Now continue from the existing working Approval Workflow module.
+
+Your task is to build the GIS Map Dashboard module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend GIS APIs
+
+Create or fix these endpoints:
+
+GET /api/gis/properties
+GET /api/gis/properties/:id
+GET /api/gis/summary
+
+The API should return only properties with valid latitude and longitude.
+
+2. GIS Property Data
+
+Each property marker should include:
+
+- property_id
+- address_code
+- house_number
+- building_name
+- property_type
+- ownership_type
+- owner_name
+- owner_phone
+- business_name
+- kebele
+- street_name
+- block_code
+- latitude
+- longitude
+- status
+- property_photo
+
+3. Frontend GIS Map Page
+
+Create or improve route:
+
+/gis-map
+
+Use:
+- Leaflet
+- OpenStreetMap
+- React Leaflet if already installed
+
+Map default center:
+Jimma City, Ethiopia
+
+Approximate coordinates:
+Latitude: 7.6667
+Longitude: 36.8333
+
+4. Map Features
+
+Add:
+
+- property markers
+- different marker colors by property type
+- popup property summary
+- link/button to property detail page
+- zoom controls
+- full-screen responsive map area
+
+Marker color rules:
+
+- Residential = Blue
+- Commercial = Green
+- Mixed Use = Orange
+- Government = Purple
+- Other = Gray
+
+5. Map Filters
+
+Add filter panel above or beside the map:
+
+- Search by address code, owner name, house number, business name
+- Filter by kebele
+- Filter by property type
+- Filter by status
+
+When filters are changed, update markers immediately.
+
+6. Map Popup Content
+
+When marker is clicked, show:
+
+- property photo thumbnail if available
+- address code
+- owner name
+- property type
+- kebele
+- street name
+- house number
+- status
+- View Details button
+
+7. Map Summary Cards
+
+Above the map, show cards:
+
+- Total mapped properties
+- Residential mapped
+- Commercial mapped
+- Approved mapped
+- Pending mapped
+- Properties missing GPS
+
+8. Missing GPS List
+
+Create a small section below the map:
+
+“Properties Missing GPS”
+
+Show:
+- owner name
+- kebele
+- street name
+- house number
+- status
+- action button to open property detail
+
+9. Role Access
+
+Admin, City Officer, Kebele Officer, and Viewer can access GIS map.
+
+Enumerator can only see properties they created, unless Admin setting already allows all.
+
+10. Final Check
+
+After implementation, test:
+
+- GIS map loads
+- markers display correctly
+- popup opens correctly
+- View Details button works
+- filters work
+- marker colors match property type
+- summary cards show correct totals
+- missing GPS list displays correctly
+- map is responsive on mobile and desktop
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues

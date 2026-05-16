@@ -366,6 +366,27 @@ paths:
         "403":
           description: Not allowed
 
+  /properties/{id}/approvals:
+    get:
+      operationId: getPropertyApprovals
+      tags: [approvals]
+      summary: Get approval history for a property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approval history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalRecord"
+
   /properties/check-duplicate:
     get:
       operationId: checkDuplicate
@@ -830,6 +851,26 @@ components:
       properties:
         remark:
           type: string
+          minLength: 1
+
+    ApprovalRecord:
+      type: object
+      required: [id, propertyId, action, createdAt]
+      properties:
+        id:
+          type: integer
+        propertyId:
+          type: integer
+        action:
+          type: string
+        actorId:
+          type: ["integer", "null"]
+        remark:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        actor:
+          $ref: "#/components/schemas/UserSummary"
 
     DuplicateCheckResult:
       type: object

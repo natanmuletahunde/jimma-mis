@@ -4,7 +4,7 @@ import fs from "fs";
 import { Router } from "express";
 import multer from "multer";
 import { db, propertiesTable, approvalsTable, usersTable } from "@workspace/db";
-import { eq, and, ilike, or, sql, ne } from "drizzle-orm";
+import { eq, and, ilike, or, sql, ne, desc } from "drizzle-orm";
 import {
   ListPropertiesQueryParams,
   CreatePropertyBody,
@@ -338,6 +338,32 @@ router.post("/properties/:id/photo", requireAuth, upload.single("photo"), async 
     .returning();
 
   res.json(serializeProperty(updated, null));
+});
+
+// ─── Approval history ────────────────────────────────────────────────────────
+
+router.get("/properties/:id/approvals", requireAuth, async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(rawId, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid property id" }); return; }
+
+  const rows = await db
+    .select({
+      approval: approvalsTable,
+      actor: { id: usersTable.id, fullName: usersTable.fullName, role: usersTable.role },
+    })
+    .from(approvalsTable)
+    .leftJoin(usersTable, eq(approvalsTable.actorId, usersTable.id))
+    .where(eq(approvalsTable.propertyId, id))
+    .orderBy(desc(approvalsTable.createdAt));
+
+  res.json(
+    rows.map((r) => ({
+      ...r.approval,
+      createdAt: r.approval.createdAt.toISOString(),
+      actor: r.actor?.id ? r.actor : null,
+    })),
+  );
 });
 
 // ─── Approve ─────────────────────────────────────────────────────────────────
