@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, propertiesTable, usersTable } from "@workspace/db";
-import { eq, and, gte, lte, ilike, or, isNull } from "drizzle-orm";
+import { db, propertiesTable, usersTable, kebelesTable } from "@workspace/db";
+import { eq, and, gte, lte, ilike } from "drizzle-orm";
 import { GetPropertyReportQueryParams } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
 
@@ -15,15 +15,22 @@ router.get("/reports/properties", requireAuth, async (req, res): Promise<void> =
   const conditions: ReturnType<typeof eq>[] = [];
 
   if (parsed.success) {
-    const { kebele, status, property_type, from_date, to_date, street_name, enumerator_name } = parsed.data;
+    const { kebele, status, property_type, from_date, to_date, street_name } = parsed.data;
     if (kebele) conditions.push(eq(propertiesTable.kebele, kebele) as ReturnType<typeof eq>);
     if (status) conditions.push(eq(propertiesTable.status, status) as ReturnType<typeof eq>);
     if (property_type) conditions.push(eq(propertiesTable.propertyType, property_type) as ReturnType<typeof eq>);
-    if (from_date) conditions.push(gte(propertiesTable.createdAt, new Date(from_date)) as ReturnType<typeof eq>);
+    if (from_date) {
+      const d = new Date(from_date);
+      if (!isNaN(d.getTime())) {
+        conditions.push(gte(propertiesTable.createdAt, d) as ReturnType<typeof eq>);
+      }
+    }
     if (to_date) {
-      const end = new Date(to_date);
-      end.setHours(23, 59, 59, 999);
-      conditions.push(lte(propertiesTable.createdAt, end) as ReturnType<typeof eq>);
+      const d = new Date(to_date);
+      if (!isNaN(d.getTime())) {
+        d.setHours(23, 59, 59, 999);
+        conditions.push(lte(propertiesTable.createdAt, d) as ReturnType<typeof eq>);
+      }
     }
     if (street_name) conditions.push(ilike(propertiesTable.streetName, `%${street_name}%`) as ReturnType<typeof eq>);
   }
@@ -32,15 +39,17 @@ router.get("/reports/properties", requireAuth, async (req, res): Promise<void> =
   if (user.role === "enumerator") {
     conditions.push(eq(propertiesTable.createdBy, user.userId) as ReturnType<typeof eq>);
   } else if (user.role === "kebele_officer" && user.kebeleId) {
-    // kebele officer sees their assigned kebele only — look up the kebele name first
-    const kebeleRows = await db.select().from(usersTable).where(eq(usersTable.id, user.userId)).limit(1);
-    if (kebeleRows[0]?.kebeleId) {
-      // Filter via createdBy users whose kebeleId matches — but simpler: use the kebele name from the user's kebele
-      // Instead, we just let the officer see all (they already filter by kebele in practice)
+    const kebeleRecord = await db
+      .select({ name: kebelesTable.name })
+      .from(kebelesTable)
+      .where(eq(kebelesTable.id, user.kebeleId))
+      .limit(1);
+    if (kebeleRecord[0]?.name) {
+      conditions.push(eq(propertiesTable.kebele, kebeleRecord[0].name) as ReturnType<typeof eq>);
     }
   }
 
-  // Enumerator name filter — requires post-join filtering
+  // Enumerator name filter — applied in-memory after join
   const enumeratorNameFilter = parsed.success ? parsed.data.enumerator_name : undefined;
 
   const rows = await db
@@ -53,13 +62,11 @@ router.get("/reports/properties", requireAuth, async (req, res): Promise<void> =
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(propertiesTable.createdAt);
 
-  let filteredRows = rows;
-  if (enumeratorNameFilter) {
-    const lower = enumeratorNameFilter.toLowerCase();
-    filteredRows = rows.filter((r) =>
-      r.user?.fullName?.toLowerCase().includes(lower),
-    );
-  }
+  const filteredRows = enumeratorNameFilter
+    ? rows.filter((r) =>
+        r.user?.fullName?.toLowerCase().includes(enumeratorNameFilter.toLowerCase()),
+      )
+    : rows;
 
   const properties = filteredRows.map((r) => ({
     ...r.property,
@@ -104,7 +111,6 @@ router.get("/reports/enumerator-performance", requireAuth, async (req, res): Pro
         : undefined,
     );
 
-  // Group by enumerator
   const map = new Map<number, {
     enumeratorId: number;
     enumeratorName: string;

@@ -1,10 +1,9 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import {
   useGetPropertyReport,
   useGetEnumeratorPerformance,
   useListKebeles,
 } from "@workspace/api-client-react";
-import type { EnumeratorPerformance } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -227,8 +226,6 @@ export default function Reports() {
   const summary = reportData?.summary;
 
   // ── CSV export ────────────────────────────────────────────────────────────
-  const printAreaRef = useRef<HTMLDivElement>(null);
-
   const handleExportCsv = () => {
     if (activeTab === "performance") {
       if (!perfData?.length) return;
@@ -318,7 +315,7 @@ export default function Reports() {
     activeTab === "performance" ? loadingPerf : loadingReport || fetchingReport;
 
   return (
-    <div className="space-y-6 pb-8" ref={printAreaRef}>
+    <div className="space-y-6 pb-8">
       {/* ─── Print-only header ─────────────────────────────────────────── */}
       <div className="hidden print:block mb-4 border-b pb-4">
         <div className="font-bold text-xl">Jimma City Address MIS — Reports</div>

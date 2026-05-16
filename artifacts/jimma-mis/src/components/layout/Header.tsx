@@ -29,7 +29,7 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card border-b border-border z-10">
+    <header className="h-16 flex items-center justify-between px-4 md:px-6 bg-card border-b border-border z-10 print:hidden">
       <div className="flex items-center gap-4 md:hidden">
         <Sheet>
           <SheetTrigger asChild>

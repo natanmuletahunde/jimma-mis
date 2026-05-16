@@ -1,0 +1,122 @@
+Now continue from the existing working Reports and Export module.
+
+Your task is to improve the Main Dashboard Analytics module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Dashboard APIs
+
+Create or fix these endpoints:
+
+GET /api/dashboard/summary
+GET /api/dashboard/property-type
+GET /api/dashboard/status-distribution
+GET /api/dashboard/registration-by-kebele
+GET /api/dashboard/daily-registration-trend
+GET /api/dashboard/enumerator-performance
+GET /api/dashboard/recent-submissions
+
+2. Dashboard Summary Cards
+
+Show KPI cards for:
+
+- Total registered properties
+- Draft records
+- Submitted records
+- Verified records
+- Approved records
+- Rejected records
+- Correction Required records
+- Residential properties
+- Commercial properties
+- Government properties
+- Properties without GPS
+
+3. Charts
+
+Use Recharts.
+
+Create:
+
+- Bar chart: Registration by Kebele
+- Pie chart: Property Type Distribution
+- Line chart: Daily Registration Trend
+- Donut/Pie chart: Approval Status Distribution
+- Bar chart: Enumerator Performance
+
+4. Recent Submissions Table
+
+Show recent submitted properties with:
+
+- Address Code
+- Owner Name
+- Property Type
+- Kebele
+- Street Name
+- Status
+- Submitted Date
+- Action button to view detail
+
+5. Dashboard Filters
+
+Add filters:
+
+- Date range
+- Kebele
+- Property Type
+- Status
+
+When filters are applied, update cards, charts, and recent submissions.
+
+6. Role-Based Dashboard
+
+Admin and City Officer:
+- see all city-wide data
+
+Kebele Officer:
+- see only assigned kebele data
+
+Enumerator:
+- see only own submitted/created data
+
+Viewer:
+- read-only dashboard
+
+7. UI Design
+
+Make dashboard professional and clean.
+
+Use:
+- responsive grid layout
+- cards with icons
+- chart containers
+- clear titles
+- loading states
+- empty states
+- error messages
+
+8. Sidebar Link
+
+Make sure Dashboard menu item routes correctly to:
+
+/dashboard
+
+9. Final Check
+
+After implementation, test:
+
+- dashboard loads without errors
+- KPI cards show correct values
+- charts load correctly
+- filters work
+- recent submissions table works
+- role-based data restriction works
+- dashboard is responsive on mobile and desktop
+
+Provide:
+- files changed
+- APIs created
+- testing steps
+- known issues
