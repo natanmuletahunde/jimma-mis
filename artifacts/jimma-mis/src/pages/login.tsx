@@ -94,7 +94,7 @@ export default function Login() {
           <img
             src="/logo.png"
             alt="Jimma City MIS Logo"
-            className="w-56 h-56 object-contain mx-auto mb-8 drop-shadow-2xl"
+            className="w-72 h-72 object-contain mx-auto mb-8 drop-shadow-2xl"
           />
           <div className="flex items-center gap-2 justify-center mt-4">
             {["Register", "Manage", "Secure", "Serve"].map((w, i) => (
