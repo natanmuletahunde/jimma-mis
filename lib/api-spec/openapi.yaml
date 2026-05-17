@@ -55,6 +55,17 @@ paths:
         "401":
           description: Invalid credentials
 
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Record logout event for audit trail
+      responses:
+        "204":
+          description: Logged out successfully
+        "401":
+          description: Unauthorized
+
   /auth/me:
     get:
       operationId: getMe

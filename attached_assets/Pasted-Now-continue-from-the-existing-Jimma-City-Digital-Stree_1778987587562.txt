@@ -1,0 +1,155 @@
+Now continue from the existing Jimma City Digital Street Address MIS project.
+
+Your task is to implement Security Hardening and Access Protection.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Backend Security Middleware
+
+Add or improve:
+
+- helmet
+- express-rate-limit
+- cors configuration
+- request size limit
+- secure HTTP headers
+- centralized error handling
+- input sanitization
+- SQL injection protection review
+- safe file upload validation
+
+2. Authentication Security
+
+Improve JWT authentication:
+
+- token expiration
+- refresh token support if not already available
+- protected route middleware
+- role-based middleware consistency
+- logout token invalidation if feasible
+- clear unauthorized response messages
+
+3. Password Security
+
+Add:
+
+- strong password validation
+- bcrypt hashing confirmation
+- password change endpoint
+- admin password reset endpoint
+
+Create endpoints:
+
+POST /api/auth/change-password
+POST /api/users/:id/reset-password
+
+Rules:
+- users can change their own password
+- Admin can reset user password
+- passwords must not be returned in API responses
+- passwords must never be logged in audit logs
+
+4. File Upload Security
+
+Strengthen upload validation:
+
+- allow only JPG, JPEG, PNG, WEBP
+- maximum file size 5 MB
+- reject executable files
+- sanitize file names
+- store files only inside uploads/properties/
+- prevent path traversal
+- return safe public file URL only
+
+5. API Access Review
+
+Review all API routes and ensure:
+
+- every protected route requires JWT
+- role restrictions are enforced
+- Enumerator can only access own records
+- Kebele Officer can only access assigned kebele records
+- City Officer and Admin can access city-wide records
+- Viewer is read-only
+- unauthorized users cannot create, edit, delete, approve, export, or upload
+
+6. Input Validation
+
+Add validation for:
+
+- email format
+- phone number format
+- latitude and longitude numeric range
+- required property fields
+- address code format
+- user role values
+- status values
+- date filter values
+
+7. Error Handling
+
+Standardize API error responses:
+
+{
+  "success": false,
+  "message": "Readable error message",
+  "errors": []
+}
+
+Standardize successful responses:
+
+{
+  "success": true,
+  "data": {},
+  "message": "Optional message"
+}
+
+8. Frontend Security Handling
+
+Improve frontend behavior:
+
+- redirect to login when token expires
+- hide restricted menu items
+- block restricted page access
+- show friendly unauthorized message
+- prevent form submission when validation fails
+- clear token on logout
+
+9. Audit Security Events
+
+Create audit logs for:
+
+- failed login
+- successful login
+- logout
+- password changed
+- password reset by admin
+- unauthorized access attempt
+- file upload rejected
+- suspicious duplicate attempt
+
+10. Final Check
+
+After implementation, test:
+
+- login still works
+- expired token redirects to login
+- unauthorized role cannot access restricted pages
+- viewer cannot edit or delete
+- enumerator cannot access another enumerator’s records
+- kebele officer cannot access another kebele’s records
+- invalid file upload is rejected
+- large file upload is rejected
+- invalid input is rejected
+- password change works
+- admin password reset works
+- audit logs capture security events
+
+Provide:
+- files changed
+- middleware added
+- APIs created/updated
+- testing steps
+- known issues

@@ -467,6 +467,13 @@ router.post("/properties/:id/reject", requireAuth, requireRole("admin", "city_of
   const parsed = RejectPropertyBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  // Fetch current status before update so audit captures the real transition
+  const [existing] = await db
+    .select({ status: propertiesTable.status, ownerName: propertiesTable.ownerName })
+    .from(propertiesTable)
+    .where(eq(propertiesTable.id, params.data.id));
+  if (!existing) { res.status(404).json({ error: "Property not found" }); return; }
+
   const [updated] = await db
     .update(propertiesTable)
     .set({ status: "rejected", remark: parsed.data.remark })
@@ -476,8 +483,8 @@ router.post("/properties/:id/reject", requireAuth, requireRole("admin", "city_of
 
   await db.insert(approvalsTable).values({ propertyId: params.data.id, action: "rejected", actorId: req.user!.userId, remark: parsed.data.remark });
   await auditReq(req, req.user!.userId, "reject_property", {
-    entityType: "property", entityId: params.data.id, entityName: updated.ownerName,
-    oldValue: "pending_or_verified", newValue: "rejected",
+    entityType: "property", entityId: params.data.id, entityName: existing.ownerName,
+    oldValue: existing.status, newValue: "rejected",
     details: parsed.data.remark,
   });
   res.json(serializeProperty(updated, null));

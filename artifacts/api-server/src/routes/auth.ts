@@ -74,6 +74,21 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   res.json({ token, user: sanitizeUser(user) });
 });
 
+router.post("/auth/logout", requireAuth, (req, res): void => {
+  // Fire-and-forget: record the logout without blocking the response
+  db.insert(auditLogsTable).values({
+    userId: req.user!.userId,
+    action: "logout",
+    entityType: "user",
+    entityId: req.user!.userId,
+    entityName: req.user!.username,
+    ipAddress: getClientIp(req),
+    deviceInfo: getDeviceInfo(req),
+    details: `Logged out (role: ${req.user!.role})`,
+  }).catch(() => {});
+  res.sendStatus(204);
+});
+
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   const [user] = await db
     .select()

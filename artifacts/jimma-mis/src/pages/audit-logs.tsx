@@ -306,6 +306,7 @@ export default function AuditLogs() {
             <SelectContent>
               <SelectItem value="__all__">All Actions</SelectItem>
               <SelectItem value="login">Login</SelectItem>
+              <SelectItem value="logout">Logout</SelectItem>
               <SelectItem value="create_property">Create Property</SelectItem>
               <SelectItem value="update_property">Update Property</SelectItem>
               <SelectItem value="submit_property">Submit Property</SelectItem>

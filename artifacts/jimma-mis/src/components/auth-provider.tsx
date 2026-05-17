@@ -21,6 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useLogin();
 
   const logout = useCallback(() => {
+    // Fire-and-forget: record the logout server-side before clearing the token
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    if (storedToken) {
+      fetch(`${import.meta.env.BASE_URL}api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${storedToken}` },
+      }).catch(() => {});
+    }
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     queryClient.setQueryData(getGetMeQueryKey(), null);

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, auditLogsTable, usersTable, propertiesTable } from "@workspace/db";
-import { eq, and, gte, lte, desc, count, inArray } from "drizzle-orm";
+import { db, auditLogsTable, usersTable } from "@workspace/db";
+import { eq, and, gte, lte, desc, count, inArray, ilike, or, type SQL } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import { auditReq } from "../lib/audit";
 
@@ -51,15 +51,21 @@ router.get("/audit-logs/summary", requireAuth, requireRole("admin", "city_office
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const withScope = (extra: Parameters<typeof and>[]) =>
+  const withScope = (extra: (SQL<unknown> | undefined)[]) =>
     and(...scopeCond, ...extra) ?? undefined;
 
   const [totalRow] = await db.select({ c: count() }).from(auditLogsTable)
     .where(scopeCond.length ? and(...scopeCond) : undefined);
   const [todayRow] = await db.select({ c: count() }).from(auditLogsTable)
     .where(withScope([gte(auditLogsTable.createdAt, todayStart)]));
+  // For scoped roles (city_officer), login events don't belong to officerScope actions,
+  // so count only that user's own logins to avoid always returning 0.
   const [loginRow] = await db.select({ c: count() }).from(auditLogsTable)
-    .where(withScope([eq(auditLogsTable.action, "login")]));
+    .where(
+      officerScope
+        ? and(eq(auditLogsTable.action, "login"), eq(auditLogsTable.userId, user.userId))
+        : eq(auditLogsTable.action, "login"),
+    );
   const [propRow] = await db.select({ c: count() }).from(auditLogsTable)
     .where(withScope([inArray(auditLogsTable.action, ["create_property", "update_property", "submit_property", "delete_property"])]));
   const [approvalRow] = await db.select({ c: count() }).from(auditLogsTable)
@@ -122,6 +128,20 @@ router.get("/audit-logs", requireAuth, requireRole("admin", "city_officer", "keb
     conditions.push(eq(auditLogsTable.userId, parseInt(user_id, 10)) as ReturnType<typeof eq>);
   }
 
+  // SQL-level search so pagination and hasMore are always accurate
+  if (search) {
+    const pat = `%${search}%`;
+    conditions.push(
+      or(
+        ilike(auditLogsTable.action, pat),
+        ilike(auditLogsTable.entityName, pat),
+        ilike(auditLogsTable.entityType, pat),
+        ilike(auditLogsTable.details, pat),
+        ilike(usersTable.fullName, pat),
+      ) as ReturnType<typeof eq>,
+    );
+  }
+
   const pageLimit = Math.min(Math.max(parseInt(lim, 10) || 50, 1), 200);
   const pageOffset = Math.max(parseInt(off, 10) || 0, 0);
 
@@ -137,23 +157,9 @@ router.get("/audit-logs", requireAuth, requireRole("admin", "city_officer", "keb
     .limit(pageLimit + 1)
     .offset(pageOffset);
 
-  // In-memory search against userName, action, entityName, details
-  const filtered = search
-    ? rows.filter((r) => {
-        const q = search.toLowerCase();
-        return (
-          r.user?.fullName?.toLowerCase().includes(q) ||
-          r.log.action.toLowerCase().includes(q) ||
-          r.log.entityName?.toLowerCase().includes(q) ||
-          r.log.entityType?.toLowerCase().includes(q) ||
-          r.log.details?.toLowerCase().includes(q)
-        );
-      })
-    : rows;
-
-  const hasMore = filtered.length > pageLimit;
+  const hasMore = rows.length > pageLimit;
   res.json({
-    logs: filtered.slice(0, pageLimit).map(fmt),
+    logs: rows.slice(0, pageLimit).map(fmt),
     hasMore,
   });
 });
@@ -161,6 +167,7 @@ router.get("/audit-logs", requireAuth, requireRole("admin", "city_officer", "keb
 // ─── GET /audit-logs/:id ──────────────────────────────────────────────────────
 
 router.get("/audit-logs/:id", requireAuth, requireRole("admin", "city_officer", "kebele_officer", "enumerator"), async (req, res): Promise<void> => {
+  const user = req.user!;
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid audit log ID" }); return; }
@@ -175,6 +182,12 @@ router.get("/audit-logs/:id", requireAuth, requireRole("admin", "city_officer", 
     .where(eq(auditLogsTable.id, id));
 
   if (!row) { res.status(404).json({ error: "Audit log not found" }); return; }
+
+  // Enumerators may only view their own audit entries
+  if (user.role === "enumerator" && row.log.userId !== user.userId) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
   res.json(fmt(row));
 });
 
