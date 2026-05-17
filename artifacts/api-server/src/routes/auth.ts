@@ -1,10 +1,12 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { db, usersTable, auditLogsTable } from "@workspace/db";
 import { eq, or } from "drizzle-orm";
 import { LoginBody } from "@workspace/api-zod";
 import { requireAuth, signToken } from "../middlewares/auth";
 import { getClientIp, getDeviceInfo } from "../lib/audit";
+import { sendPasswordResetEmail } from "../lib/email";
 
 const router = Router();
 
@@ -59,7 +61,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     kebeleId: user.kebeleId,
   });
 
-  // Fire-and-forget audit — must not block the login response
   db.insert(auditLogsTable).values({
     userId: user.id,
     action: "login",
@@ -75,7 +76,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 });
 
 router.post("/auth/logout", requireAuth, (req, res): void => {
-  // Fire-and-forget: record the logout without blocking the response
   db.insert(auditLogsTable).values({
     userId: req.user!.userId,
     action: "logout",
@@ -102,6 +102,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
     .where(or(eq(usersTable.username, username.trim()), eq(usersTable.email, username.trim())));
 
   if (!user || !user.isActive) {
+    // Always return success to prevent user enumeration
     res.json({ found: false });
     return;
   }
@@ -113,7 +114,76 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
     ? user.phone.replace(/^(\d{3})(.*)(\d{2})$/, (_, a, _b, c) => `${a}*****${c}`)
     : null;
 
+  // Generate a secure reset token valid for 1 hour
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+  await db
+    .update(usersTable)
+    .set({ resetToken, resetTokenExpiry })
+    .where(eq(usersTable.id, user.id));
+
+  // Build reset link using the request host
+  const proto = req.headers["x-forwarded-proto"] ?? "https";
+  const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "";
+  const resetLink = `${proto}://${host}/reset-password?token=${resetToken}`;
+
+  // Send email if the user has an email address
+  if (user.email) {
+    sendPasswordResetEmail(user.email, user.fullName, resetLink).catch((err) => {
+      req.log.error({ err }, "Failed to send password reset email");
+    });
+  }
+
   res.json({ found: true, maskedEmail, maskedPhone, fullName: user.fullName });
+});
+
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const { token, newPassword } = req.body ?? {};
+
+  if (!token || typeof token !== "string") {
+    res.status(400).json({ error: "Reset token is required" });
+    return;
+  }
+  if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+    res.status(400).json({ error: "New password must be at least 8 characters" });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.resetToken, token));
+
+  if (!user || !user.resetTokenExpiry) {
+    res.status(400).json({ error: "Invalid or expired reset link" });
+    return;
+  }
+
+  if (new Date() > user.resetTokenExpiry) {
+    res.status(400).json({ error: "This reset link has expired. Please request a new one." });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  await db
+    .update(usersTable)
+    .set({ passwordHash, resetToken: null, resetTokenExpiry: null })
+    .where(eq(usersTable.id, user.id));
+
+  db.insert(auditLogsTable).values({
+    userId: user.id,
+    action: "password_reset",
+    entityType: "user",
+    entityId: user.id,
+    entityName: user.username,
+    ipAddress: getClientIp(req),
+    deviceInfo: getDeviceInfo(req),
+    details: "Password reset via email link",
+  }).catch(() => {});
+
+  res.json({ success: true });
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {

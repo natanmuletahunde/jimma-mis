@@ -15,6 +15,8 @@ export const usersTable = pgTable("users", {
   role: text("role").notNull().default("viewer"),
   kebeleId: integer("kebele_id").references(() => kebelesTable.id),
   isActive: boolean("is_active").notNull().default(true),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

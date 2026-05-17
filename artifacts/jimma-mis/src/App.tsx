@@ -9,6 +9,7 @@ import { MobileLayout } from "@/pages/mobile/MobileLayout";
 import NotFound from "@/pages/not-found";
 
 import Login from "@/pages/login";
+import ResetPassword from "@/pages/reset-password";
 import Dashboard from "@/pages/dashboard";
 import PropertiesList from "@/pages/properties/index";
 import PropertyNew from "@/pages/properties/new";
@@ -82,6 +83,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/mobile/:rest*">
         <MobileLayout>
           <MobileRoutes />
