@@ -138,37 +138,34 @@ function KpiCard({
   onClick?: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Card
       onClick={onClick}
-      className="w-full text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
+      className="cursor-pointer select-none transition-all duration-150 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 active:scale-[0.98]"
     >
-      <Card className="transition-all duration-150 group-hover:shadow-md group-hover:border-primary/30 group-hover:-translate-y-0.5 cursor-pointer">
-        <CardContent className="p-3 flex items-center gap-2.5">
-          {/* Icon badge */}
-          <div className={`p-1.5 rounded-md ${colorClass} shrink-0`}>
-            <Icon className="h-3 w-3 text-white" />
-          </div>
+      <CardContent className="p-3 flex items-center gap-2.5">
+        {/* Icon badge */}
+        <div className={`p-1.5 rounded-md ${colorClass} shrink-0`}>
+          <Icon className="h-3 w-3 text-white" />
+        </div>
 
-          {/* Label + value */}
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide truncate leading-none">
-              {title}
+        {/* Label + value */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide truncate leading-none">
+            {title}
+          </p>
+          {loading ? (
+            <div className="h-4 w-8 bg-muted animate-pulse rounded mt-1" />
+          ) : (
+            <p className="text-base font-bold tabular-nums leading-none mt-0.5">
+              {value ?? 0}
             </p>
-            {loading ? (
-              <div className="h-4 w-8 bg-muted animate-pulse rounded mt-1" />
-            ) : (
-              <p className="text-base font-bold tabular-nums leading-none mt-0.5">
-                {value ?? 0}
-              </p>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Arrow hint */}
-          <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground/80 shrink-0 transition-colors" />
-        </CardContent>
-      </Card>
-    </button>
+        {/* Arrow hint */}
+        <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0 transition-colors group-hover:text-muted-foreground/80" />
+      </CardContent>
+    </Card>
   );
 }
 
