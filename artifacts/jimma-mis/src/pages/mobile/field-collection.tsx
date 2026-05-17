@@ -297,7 +297,7 @@ export default function FieldCollection() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    const ALLOWED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
     if (!ALLOWED.includes(file.type)) {
       showToast("error", "Only JPG, PNG, or WEBP images are allowed.");
       return;
@@ -381,15 +381,16 @@ export default function FieldCollection() {
       return;
     }
 
-    // Sync it
+    // Sync it — awaiting here so the draft's syncError/serverId are written
+    // to IDB before we navigate away.
     await syncOne(draft, token ?? null);
 
-    // Re-fetch to check sync result
     setSubmitting(false);
-
-    // Navigate to offline drafts to show result
+    // Show feedback BEFORE navigating so the toast is visible while mounted.
+    showToast("success", "Submitted! Check Drafts for the result.");
+    // Small delay so the user can read the toast before the page changes.
+    await new Promise((r) => setTimeout(r, 1200));
     setLocation("/mobile/offline-drafts");
-    showToast("info", "Syncing — check Drafts to confirm.");
   };
 
   const hasGps = !!(form.latitude && form.longitude);
