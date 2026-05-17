@@ -89,6 +89,33 @@ router.post("/auth/logout", requireAuth, (req, res): void => {
   res.sendStatus(204);
 });
 
+router.post("/auth/forgot-password", async (req, res): Promise<void> => {
+  const { username } = req.body ?? {};
+  if (!username || typeof username !== "string") {
+    res.status(400).json({ error: "Username is required" });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(or(eq(usersTable.username, username.trim()), eq(usersTable.email, username.trim())));
+
+  if (!user || !user.isActive) {
+    res.json({ found: false });
+    return;
+  }
+
+  const maskedEmail = user.email
+    ? user.email.replace(/^(.)(.*)(@.*)$/, (_, a, _b, c) => `${a}***${c}`)
+    : null;
+  const maskedPhone = user.phone
+    ? user.phone.replace(/^(\d{3})(.*)(\d{2})$/, (_, a, _b, c) => `${a}*****${c}`)
+    : null;
+
+  res.json({ found: true, maskedEmail, maskedPhone, fullName: user.fullName });
+});
+
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   const [user] = await db
     .select()
