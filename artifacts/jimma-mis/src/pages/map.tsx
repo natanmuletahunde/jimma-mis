@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   useGetMapProperties,
   useGetMapSummary,
@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Search,
   ExternalLink,
-  Map,
+  Map as MapIcon,
 } from "lucide-react";
 // @ts-ignore
 import L from "leaflet";
@@ -34,26 +34,33 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 // ── Marker colors by property type ──────────────────────────────────────────
 const TYPE_COLORS: Record<string, string> = {
-  residential: "#3b82f6",   // blue
-  commercial:  "#22c55e",   // green
-  mixed_use:   "#f97316",   // orange
-  government:  "#a855f7",   // purple
+  residential: "#3b82f6", // blue
+  commercial:  "#22c55e", // green
+  mixed:       "#f97316", // orange  (stored as "mixed", not "mixed_use")
+  government:  "#a855f7", // purple
+  institution: "#0ea5e9", // sky blue
 };
 function markerColor(type: string): string {
   return TYPE_COLORS[type] ?? "#6b7280"; // gray = other
 }
 
-// Build an SVG circle marker icon
-function svgIcon(color: string) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
-    <circle cx="11" cy="11" r="9" fill="${color}" stroke="#fff" stroke-width="2.5"/>
+// Build an SVG circle marker icon; highlighted = larger with pulse ring
+function svgIcon(color: string, highlighted = false) {
+  const size = highlighted ? 28 : 22;
+  const r = highlighted ? 11 : 9;
+  const ring = highlighted
+    ? `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1}" fill="none" stroke="${color}" stroke-width="2" opacity="0.4"/>`
+    : "";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${ring}
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="${color}" stroke="#fff" stroke-width="${highlighted ? 3 : 2.5}"/>
   </svg>`;
   return L.divIcon({
     html: svg,
     className: "",
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-    popupAnchor: [0, -12],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -(size / 2 + 2)],
   });
 }
 
@@ -62,9 +69,9 @@ function statusLabel(s: string) {
 }
 
 function statusColor(s: string) {
-  if (s === "approved") return "#22c55e";
-  if (s === "rejected") return "#ef4444";
-  if (s === "pending") return "#f59e0b";
+  if (s === "approved")        return "#22c55e";
+  if (s === "rejected")        return "#ef4444";
+  if (s === "pending")         return "#f59e0b";
   if (s === "kebele_verified") return "#6366f1";
   return "#9ca3af";
 }
@@ -117,15 +124,26 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function MapView() {
   const [, navigate] = useLocation();
+  const searchString = useSearch();
 
-  const mapRef = useRef<HTMLDivElement>(null);
+  // Parse deep-link params: /map?id=5&lat=7.66&lng=36.83
+  const searchParams = new URLSearchParams(searchString);
+  const targetId  = searchParams.get("id")  ? Number(searchParams.get("id"))  : null;
+  const targetLat = searchParams.get("lat") ? Number(searchParams.get("lat")) : null;
+  const targetLng = searchParams.get("lng") ? Number(searchParams.get("lng")) : null;
+
+  const mapRef         = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.LayerGroup | null>(null);
+  const markersRef     = useRef<L.LayerGroup | null>(null);
+  // Track every marker by property ID so we can programmatically open one
+  const markerMapRef   = useRef<Map<number, L.Marker>>(new Map());
+  // Only fly-to once per deep-link visit
+  const didFlyRef      = useRef(false);
 
-  const [search, setSearch] = useState("");
-  const [kebele, setKebele] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [propertyType, setPropertyType] = useState("all");
+  const [search, setSearch]               = useState("");
+  const [kebele, setKebele]               = useState("all");
+  const [status, setStatus]               = useState("all");
+  const [propertyType, setPropertyType]   = useState("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce search
@@ -135,16 +153,16 @@ export default function MapView() {
   }, [search]);
 
   const params = {
-    kebele: kebele !== "all" ? kebele : undefined,
-    status: status !== "all" ? status : undefined,
-    property_type: propertyType !== "all" ? propertyType : undefined,
-    search: debouncedSearch || undefined,
+    kebele:        kebele        !== "all" ? kebele        : undefined,
+    status:        status        !== "all" ? status        : undefined,
+    property_type: propertyType  !== "all" ? propertyType  : undefined,
+    search:        debouncedSearch || undefined,
   };
 
   const { data: properties, isLoading } = useGetMapProperties(params);
-  const { data: summary } = useGetMapSummary();
+  const { data: summary }               = useGetMapSummary();
 
-  // Expose navigate for Leaflet popups (accessed from inline HTML onclick)
+  // Expose navigate for Leaflet popup inline onclick handlers
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__gisNavigate = (path: string) =>
       navigate(path);
@@ -153,7 +171,7 @@ export default function MapView() {
     };
   }, [navigate]);
 
-  // Initialise map once
+  // Initialise map once on mount
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
     const map = L.map(mapRef.current, { zoomControl: true }).setView(
@@ -166,7 +184,6 @@ export default function MapView() {
     }).addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
-    // Invalidate size after the flex layout has fully settled
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);
     return () => {
@@ -176,17 +193,21 @@ export default function MapView() {
     };
   }, []);
 
-  // Update markers when data changes
+  // Rebuild markers whenever data changes
   useEffect(() => {
     if (!mapInstanceRef.current || !markersRef.current || !properties) return;
     markersRef.current.clearLayers();
+    markerMapRef.current.clear();
 
     properties.forEach((prop) => {
       if (prop.latitude == null || prop.longitude == null) return;
 
-      const color = markerColor(prop.propertyType);
-      const marker = L.marker([prop.latitude, prop.longitude], {
-        icon: svgIcon(color),
+      const isTarget    = prop.id === targetId;
+      const color       = markerColor(prop.propertyType);
+      const marker      = L.marker([prop.latitude, prop.longitude], {
+        icon: svgIcon(color, isTarget),
+        // Highlighted marker renders on top
+        zIndexOffset: isTarget ? 1000 : 0,
       });
 
       const photoHtml = prop.propertyPhoto
@@ -229,8 +250,23 @@ export default function MapView() {
       );
 
       markersRef.current?.addLayer(marker);
+      markerMapRef.current.set(prop.id, marker);
     });
-  }, [properties]);
+
+    // Deep-link: fly to targeted property and open its popup (only once)
+    if (targetId && targetLat && targetLng && !didFlyRef.current) {
+      didFlyRef.current = true;
+      mapInstanceRef.current.flyTo([targetLat, targetLng], 18, {
+        animate: true,
+        duration: 1.2,
+      });
+      // Open popup after the fly animation settles
+      setTimeout(() => {
+        const marker = markerMapRef.current.get(targetId);
+        marker?.openPopup();
+      }, 1400);
+    }
+  }, [properties, targetId, targetLat, targetLng]);
 
   // Revalidate map size on window resize
   useEffect(() => {
@@ -242,53 +278,38 @@ export default function MapView() {
   return (
     <div className="flex flex-col gap-5 pb-6">
       {/* Page header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Map className="w-6 h-6 text-primary" /> GIS Map Dashboard
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Geospatial view of all registered properties in Jimma City.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <MapIcon className="w-6 h-6 text-primary" /> GIS Map Dashboard
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Geospatial view of all registered properties in Jimma City.
+          </p>
+        </div>
+        {/* Banner shown when arriving from the property list */}
+        {targetId && (
+          <div className="flex items-center gap-2 text-sm bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-3 py-2">
+            <MapPin className="w-4 h-4 shrink-0" />
+            <span>Showing location of property&nbsp;<strong>#{targetId}</strong></span>
+            <button
+              onClick={() => navigate("/map")}
+              className="ml-1 underline underline-offset-2 hover:text-emerald-900 text-xs"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Summary cards */}
       <div className="flex flex-wrap gap-3">
-        <SummaryCard
-          icon={<MapPin className="w-4 h-4" />}
-          label="Total Mapped"
-          value={summary?.total}
-          accent="#3b82f6"
-        />
-        <SummaryCard
-          icon={<Home className="w-4 h-4" />}
-          label="Residential"
-          value={summary?.residential}
-          accent="#3b82f6"
-        />
-        <SummaryCard
-          icon={<Building2 className="w-4 h-4" />}
-          label="Commercial"
-          value={summary?.commercial}
-          accent="#22c55e"
-        />
-        <SummaryCard
-          icon={<CheckCircle className="w-4 h-4" />}
-          label="Approved"
-          value={summary?.approved}
-          accent="#22c55e"
-        />
-        <SummaryCard
-          icon={<Clock className="w-4 h-4" />}
-          label="Pending"
-          value={summary?.pending}
-          accent="#f59e0b"
-        />
-        <SummaryCard
-          icon={<AlertTriangle className="w-4 h-4" />}
-          label="Missing GPS"
-          value={summary?.missingGps}
-          accent="#ef4444"
-        />
+        <SummaryCard icon={<MapPin className="w-4 h-4" />}    label="Total Mapped" value={summary?.total}       accent="#3b82f6" />
+        <SummaryCard icon={<Home className="w-4 h-4" />}      label="Residential"  value={summary?.residential} accent="#3b82f6" />
+        <SummaryCard icon={<Building2 className="w-4 h-4" />} label="Commercial"   value={summary?.commercial}  accent="#22c55e" />
+        <SummaryCard icon={<CheckCircle className="w-4 h-4" />} label="Approved"   value={summary?.approved}    accent="#22c55e" />
+        <SummaryCard icon={<Clock className="w-4 h-4" />}     label="Pending"      value={summary?.pending}     accent="#f59e0b" />
+        <SummaryCard icon={<AlertTriangle className="w-4 h-4" />} label="Missing GPS" value={summary?.missingGps} accent="#ef4444" />
       </div>
 
       {/* Filter bar */}
@@ -327,9 +348,9 @@ export default function MapView() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="residential">Residential</SelectItem>
               <SelectItem value="commercial">Commercial</SelectItem>
-              <SelectItem value="mixed_use">Mixed Use</SelectItem>
+              <SelectItem value="mixed">Mixed Use</SelectItem>
               <SelectItem value="government">Government</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="institution">Institution</SelectItem>
             </SelectContent>
           </Select>
 
@@ -361,13 +382,14 @@ export default function MapView() {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 px-1">
         <LegendDot color={TYPE_COLORS.residential} label="Residential" />
-        <LegendDot color={TYPE_COLORS.commercial} label="Commercial" />
-        <LegendDot color={TYPE_COLORS.mixed_use} label="Mixed Use" />
-        <LegendDot color={TYPE_COLORS.government} label="Government" />
-        <LegendDot color="#6b7280" label="Other" />
+        <LegendDot color={TYPE_COLORS.commercial}  label="Commercial" />
+        <LegendDot color={TYPE_COLORS.mixed}        label="Mixed Use" />
+        <LegendDot color={TYPE_COLORS.government}   label="Government" />
+        <LegendDot color={TYPE_COLORS.institution}  label="Institution" />
+        <LegendDot color="#6b7280"                  label="Other" />
       </div>
 
-      {/* Map — no overflow-hidden so Leaflet popups are not clipped */}
+      {/* Map */}
       <Card>
         <div
           ref={mapRef}
