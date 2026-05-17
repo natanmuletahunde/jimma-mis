@@ -96,13 +96,13 @@ export default function Login() {
             alt="Jimma City MIS Logo"
             className="w-96 h-96 object-contain mx-auto mb-6 drop-shadow-2xl"
           />
-          <div className="flex items-center gap-2 justify-center mt-4">
+          <div className="flex items-center gap-3 justify-center mt-4">
             {["Register", "Manage", "Secure", "Serve"].map((w, i) => (
-              <span key={w} className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-widest text-blue-200/80">
+              <span key={w} className="flex items-center gap-3">
+                <span className="text-base font-bold uppercase tracking-widest text-black">
                   {w}
                 </span>
-                {i < 3 && <span className="text-emerald-400/60 text-xs">|</span>}
+                {i < 3 && <span className="text-black/50 text-base font-bold">|</span>}
               </span>
             ))}
           </div>
@@ -113,9 +113,9 @@ export default function Login() {
               { value: "Digital", label: "Records" },
               { value: "Secure", label: "Access" },
             ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
-                <div className="text-white font-bold text-sm">{stat.value}</div>
-                <div className="text-blue-200/70 text-[10px] uppercase tracking-wide mt-0.5">
+              <div key={stat.label} className="bg-white/40 rounded-xl p-4 backdrop-blur-sm">
+                <div className="text-black font-extrabold text-lg">{stat.value}</div>
+                <div className="text-black/70 text-sm font-semibold uppercase tracking-wide mt-0.5">
                   {stat.label}
                 </div>
               </div>
