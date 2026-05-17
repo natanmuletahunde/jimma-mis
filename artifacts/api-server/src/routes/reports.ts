@@ -85,7 +85,7 @@ router.get("/reports/properties", requireAuth, async (req, res): Promise<void> =
     commercial: properties.filter((p) => p.propertyType === "commercial").length,
     government: properties.filter((p) => p.propertyType === "government").length,
     institution: properties.filter((p) => p.propertyType === "institution").length,
-    mixed: properties.filter((p) => p.propertyType === "mixed_use").length,
+    mixed: properties.filter((p) => p.propertyType === "mixed").length,
     withoutGps: properties.filter((p) => p.latitude == null || p.longitude == null).length,
     kebeleBreakdown: [],
   };

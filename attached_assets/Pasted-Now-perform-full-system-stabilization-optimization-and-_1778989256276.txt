@@ -1,0 +1,195 @@
+Now perform full system stabilization, optimization, and production readiness review for the Jimma City Digital Street Address MIS.
+
+Do not add major new features.
+
+Inspect the entire project and improve overall quality, consistency, stability, performance, responsiveness, and maintainability.
+
+Focus on the following:
+
+1. Backend Stabilization
+
+Review all backend modules:
+
+- authentication
+- users
+- properties
+- approvals
+- GIS
+- reports
+- data quality
+- uploads
+- audit logs
+- setup modules
+
+Fix:
+- broken imports
+- duplicated code
+- inconsistent API responses
+- unsafe queries
+- missing validation
+- missing async error handling
+- inconsistent middleware usage
+- unhandled promise rejections
+- route conflicts
+- slow queries
+- missing indexes
+
+2. Database Optimization
+
+Review PostgreSQL schema.
+
+Improve:
+- indexes
+- foreign key constraints
+- query performance
+- duplicate indexes
+- cascade rules
+- timestamp consistency
+
+Add missing indexes for:
+- address_code
+- status
+- kebele
+- property_type
+- created_by
+- latitude/longitude if needed
+
+3. Frontend Stabilization
+
+Review all pages and components.
+
+Fix:
+- broken routes
+- API mismatch issues
+- repeated logic
+- inconsistent UI spacing
+- loading states
+- error states
+- empty table states
+- mobile responsiveness
+- sidebar responsiveness
+- form reset issues
+- stale state issues
+- memory leaks if any
+
+4. Reusable Architecture
+
+Improve project structure:
+
+- reusable table component
+- reusable modal component
+- reusable form validation
+- reusable API service layer
+- reusable role guard
+- reusable notification/toast handling
+
+5. Role and Permission Review
+
+Verify every role restriction.
+
+Check:
+- Admin
+- City Officer
+- Kebele Officer
+- Enumerator
+- Viewer
+
+Ensure:
+- unauthorized actions are blocked
+- restricted pages redirect correctly
+- menu visibility matches backend permissions
+- APIs enforce permissions consistently
+
+6. GIS Optimization
+
+Review GIS module.
+
+Fix:
+- map performance
+- marker rendering
+- popup responsiveness
+- filter performance
+- invalid GPS handling
+- map resizing issues
+- mobile GIS responsiveness
+
+7. Reports Optimization
+
+Improve:
+- filter consistency
+- CSV export stability
+- print layout
+- large table responsiveness
+- pagination if needed
+
+8. Upload Optimization
+
+Improve:
+- image loading
+- preview performance
+- upload error handling
+- upload cleanup
+- invalid image handling
+
+9. Security Review
+
+Review:
+- JWT usage
+- token expiration handling
+- upload security
+- API protection
+- rate limiting
+- CORS
+- sensitive data exposure
+- password handling
+
+10. Final UI/UX Polish
+
+Improve:
+- typography consistency
+- spacing consistency
+- color consistency
+- icon consistency
+- responsive layouts
+- form usability
+- button alignment
+- dashboard card consistency
+- table readability
+
+11. Final Testing
+
+Test all workflows:
+
+- login/logout
+- create property
+- upload photo
+- capture GPS
+- submit property
+- verify property
+- approve property
+- reject and resubmit
+- GIS display
+- reports export
+- user management
+- audit logs
+- offline drafts and sync
+
+12. README and Setup
+
+Update README with:
+
+- installation steps
+- environment variables
+- database setup
+- seed commands
+- development commands
+- production build commands
+
+13. Final Output
+
+Provide:
+- major fixes completed
+- files changed
+- remaining known issues
+- production readiness checklist
+- recommended next improvements

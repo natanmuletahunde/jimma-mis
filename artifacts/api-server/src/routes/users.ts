@@ -123,6 +123,17 @@ router.post(
       return;
     }
 
+    // Check username uniqueness before INSERT (avoids raw unique-constraint crash)
+    const [existingUsername] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, username))
+      .limit(1);
+    if (existingUsername) {
+      res.status(409).json({ error: "Username is already in use" });
+      return;
+    }
+
     if (email) {
       const [existing] = await db
         .select({ id: usersTable.id })

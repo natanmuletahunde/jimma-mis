@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { db, propertiesTable, usersTable, kebelesTable } from "@workspace/db";
-import { eq, and, gte, lte, ilike, sql } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, sql, desc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-// ─── Shared: build filter conditions from query + role ─────────────────────────
+// ─── Shared: build WHERE conditions from query params + role ──────────────────
+// Returns an array of Drizzle conditions; caller uses and(...) or undefined.
 
 async function buildConditions(
   query: Record<string, unknown>,
@@ -30,72 +31,85 @@ async function buildConditions(
   if (property_type) conditions.push(eq(propertiesTable.propertyType, property_type) as ReturnType<typeof eq>);
   if (status) conditions.push(eq(propertiesTable.status, status) as ReturnType<typeof eq>);
 
-  // Role-based scope
+  // Scope by role — enumerators see only their own; kebele officers see only their kebele
   if (user.role === "enumerator") {
     conditions.push(eq(propertiesTable.createdBy, user.userId) as ReturnType<typeof eq>);
   } else if (user.role === "kebele_officer" && user.kebeleId) {
-    const rec = await db
+    const [rec] = await db
       .select({ name: kebelesTable.name })
       .from(kebelesTable)
       .where(eq(kebelesTable.id, user.kebeleId))
       .limit(1);
-    if (rec[0]?.name) {
-      conditions.push(ilike(propertiesTable.kebele, rec[0].name) as ReturnType<typeof eq>);
+    if (rec?.name) {
+      conditions.push(ilike(propertiesTable.kebele, rec.name) as ReturnType<typeof eq>);
     }
   }
 
   return conditions;
 }
 
-// ─── GET /dashboard/stats ──────────────────────────────────────────────────────
+// ─── GET /dashboard/stats ─────────────────────────────────────────────────────
+// Uses a single SQL aggregation query (COUNT with FILTER) instead of loading
+// all rows into memory and counting in JavaScript.
 
 router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
   const conditions = await buildConditions(req.query as Record<string, unknown>, req.user!);
+  const where = conditions.length ? and(...conditions) : undefined;
 
-  const all = await db
-    .select()
+  // Single-pass aggregation: all counters in one round-trip
+  const [counts] = await db
+    .select({
+      total:          sql<number>`count(*)::int`,
+      draft:          sql<number>`count(*) filter (where ${propertiesTable.status} = 'draft')::int`,
+      approved:       sql<number>`count(*) filter (where ${propertiesTable.status} = 'approved')::int`,
+      pending:        sql<number>`count(*) filter (where ${propertiesTable.status} = 'pending')::int`,
+      rejected:       sql<number>`count(*) filter (where ${propertiesTable.status} = 'rejected')::int`,
+      kebeleVerified: sql<number>`count(*) filter (where ${propertiesTable.status} = 'kebele_verified')::int`,
+      residential:    sql<number>`count(*) filter (where ${propertiesTable.propertyType} = 'residential')::int`,
+      commercial:     sql<number>`count(*) filter (where ${propertiesTable.propertyType} = 'commercial')::int`,
+      government:     sql<number>`count(*) filter (where ${propertiesTable.propertyType} = 'government')::int`,
+      institution:    sql<number>`count(*) filter (where ${propertiesTable.propertyType} = 'institution')::int`,
+      // Schema and spec both use "mixed" — not "mixed_use"
+      mixed:          sql<number>`count(*) filter (where ${propertiesTable.propertyType} = 'mixed')::int`,
+      withoutGps:     sql<number>`count(*) filter (where ${propertiesTable.latitude} is null or ${propertiesTable.longitude} is null)::int`,
+    })
     .from(propertiesTable)
-    .where(conditions.length ? and(...conditions) : undefined);
+    .where(where);
 
-  const total = all.length;
-  const draft = all.filter((p) => p.status === "draft").length;
-  const approved = all.filter((p) => p.status === "approved").length;
-  const pending = all.filter((p) => p.status === "pending").length;
-  const rejected = all.filter((p) => p.status === "rejected").length;
-  const kebeleVerified = all.filter((p) => p.status === "kebele_verified").length;
-  const residential = all.filter((p) => p.propertyType === "residential").length;
-  const commercial = all.filter((p) => p.propertyType === "commercial").length;
-  const government = all.filter((p) => p.propertyType === "government").length;
-  const institution = all.filter((p) => p.propertyType === "institution").length;
-  const mixed = all.filter((p) => p.propertyType === "mixed_use").length;
-  const withoutGps = all.filter((p) => p.latitude == null || p.longitude == null).length;
+  // Kebele breakdown in a second aggregation query (GROUP BY)
+  const kebeleBreakdown = await db
+    .select({
+      kebele: propertiesTable.kebele,
+      count:  sql<number>`count(*)::int`,
+    })
+    .from(propertiesTable)
+    .where(where)
+    .groupBy(propertiesTable.kebele)
+    .orderBy(sql`count(*) desc`);
 
-  const kebeleMap: Record<string, number> = {};
-  for (const p of all) {
-    kebeleMap[p.kebele] = (kebeleMap[p.kebele] ?? 0) + 1;
-  }
-  const kebeleBreakdown = Object.entries(kebeleMap)
-    .map(([kebele, count]) => ({ kebele, count }))
-    .sort((a, b) => b.count - a.count);
-
-  res.json({ total, draft, approved, pending, rejected, kebeleVerified, residential, commercial, government, institution, mixed, withoutGps, kebeleBreakdown });
+  res.json({ ...counts, kebeleBreakdown });
 });
 
 // ─── GET /dashboard/by-kebele ─────────────────────────────────────────────────
+// Aggregation query — no full table scan.
 
 router.get("/dashboard/by-kebele", requireAuth, async (_req, res): Promise<void> => {
-  const all = await db.select({ kebele: propertiesTable.kebele }).from(propertiesTable);
-  const kebeleMap: Record<string, number> = {};
-  for (const p of all) {
-    kebeleMap[p.kebele] = (kebeleMap[p.kebele] ?? 0) + 1;
-  }
-  res.json(Object.entries(kebeleMap).map(([kebele, count]) => ({ kebele, count })));
+  const rows = await db
+    .select({
+      kebele: propertiesTable.kebele,
+      count:  sql<number>`count(*)::int`,
+    })
+    .from(propertiesTable)
+    .groupBy(propertiesTable.kebele)
+    .orderBy(sql`count(*) desc`);
+
+  res.json(rows);
 });
 
 // ─── GET /dashboard/recent ────────────────────────────────────────────────────
 
 router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => {
-  const limit = Number(req.query.limit) || 10;
+  const limit = Math.min(Number(req.query.limit) || 10, 50);
   const conditions = await buildConditions(req.query as Record<string, unknown>, req.user!);
 
   const rows = await db
@@ -106,7 +120,7 @@ router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => 
     .from(propertiesTable)
     .leftJoin(usersTable, eq(propertiesTable.createdBy, usersTable.id))
     .where(conditions.length ? and(...conditions) : undefined)
-    .orderBy(sql`${propertiesTable.createdAt} DESC`)
+    .orderBy(desc(propertiesTable.createdAt))
     .limit(limit);
 
   res.json(
@@ -120,6 +134,7 @@ router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => 
 });
 
 // ─── GET /dashboard/trend ─────────────────────────────────────────────────────
+// 30-day daily registration count with zero-fill for missing days.
 
 router.get("/dashboard/trend", requireAuth, async (req, res): Promise<void> => {
   const user = req.user!;
@@ -128,13 +143,13 @@ router.get("/dashboard/trend", requireAuth, async (req, res): Promise<void> => {
   if (user.role === "enumerator") {
     roleConditions.push(eq(propertiesTable.createdBy, user.userId) as ReturnType<typeof eq>);
   } else if (user.role === "kebele_officer" && user.kebeleId) {
-    const rec = await db
+    const [rec] = await db
       .select({ name: kebelesTable.name })
       .from(kebelesTable)
       .where(eq(kebelesTable.id, user.kebeleId))
       .limit(1);
-    if (rec[0]?.name) {
-      roleConditions.push(ilike(propertiesTable.kebele, rec[0].name) as ReturnType<typeof eq>);
+    if (rec?.name) {
+      roleConditions.push(ilike(propertiesTable.kebele, rec.name) as ReturnType<typeof eq>);
     }
   }
 
@@ -146,7 +161,7 @@ router.get("/dashboard/trend", requireAuth, async (req, res): Promise<void> => {
 
   const rows = await db
     .select({
-      date: sql<string>`to_char(date_trunc('day', ${propertiesTable.createdAt}), 'YYYY-MM-DD')`,
+      date:  sql<string>`to_char(date_trunc('day', ${propertiesTable.createdAt}), 'YYYY-MM-DD')`,
       count: sql<number>`count(*)::int`,
     })
     .from(propertiesTable)
@@ -154,7 +169,7 @@ router.get("/dashboard/trend", requireAuth, async (req, res): Promise<void> => {
     .groupBy(sql`date_trunc('day', ${propertiesTable.createdAt})`)
     .orderBy(sql`date_trunc('day', ${propertiesTable.createdAt})`);
 
-  // Fill in zero days for gaps
+  // Fill in zeros for days with no registrations
   const map = new Map(rows.map((r) => [r.date, r.count]));
   const trend: { date: string; count: number }[] = [];
   for (let i = 29; i >= 0; i--) {

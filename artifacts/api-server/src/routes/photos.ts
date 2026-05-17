@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, "../uploads/properties");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const ALLOWED_MIMETYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ALLOWED_MIMETYPES = ["image/jpeg", "image/png", "image/webp"];
 const PHOTO_CATEGORIES = ["front_view", "side_view", "business_sign", "document", "other"];
 
 const storage = multer.diskStorage({

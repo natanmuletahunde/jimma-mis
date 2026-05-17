@@ -21,7 +21,8 @@ type KebeleRow = typeof kebelesTable.$inferSelect;
 type StreetRow = typeof streetsTable.$inferSelect;
 type BlockRow = typeof blocksTable.$inferSelect;
 
-async function formatKebele(k: KebeleRow) {
+// Single-record formatters — used after INSERT/UPDATE (one record, one extra query is fine).
+function formatKebele(k: KebeleRow) {
   return {
     id: k.id,
     name: k.name,
@@ -43,21 +44,13 @@ async function formatStreet(s: StreetRow) {
     kebeleName = k?.name ?? null;
   }
   return {
-    id: s.id,
-    name: s.name,
-    code: s.code,
-    kebeleId: s.kebeleId,
-    kebeleName,
-    streetType: s.streetType ?? null,
-    roadSurface: s.roadSurface ?? null,
-    startLat: s.startLat ?? null,
-    startLng: s.startLng ?? null,
-    endLat: s.endLat ?? null,
-    endLng: s.endLng ?? null,
-    description: s.description ?? null,
-    status: s.status,
-    createdAt: s.createdAt.toISOString(),
-    updatedAt: s.updatedAt.toISOString(),
+    id: s.id, name: s.name, code: s.code,
+    kebeleId: s.kebeleId, kebeleName,
+    streetType: s.streetType ?? null, roadSurface: s.roadSurface ?? null,
+    startLat: s.startLat ?? null, startLng: s.startLng ?? null,
+    endLat: s.endLat ?? null, endLng: s.endLng ?? null,
+    description: s.description ?? null, status: s.status,
+    createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(),
   };
 }
 
@@ -75,42 +68,49 @@ async function formatBlock(b: BlockRow) {
     streetCode = s?.code ?? null;
   }
   return {
-    id: b.id,
-    code: b.code,
-    kebeleId: b.kebeleId,
-    kebeleName,
-    streetId: b.streetId,
-    streetName,
-    streetCode,
-    description: b.description ?? null,
-    status: b.status,
-    createdAt: b.createdAt.toISOString(),
-    updatedAt: b.updatedAt.toISOString(),
+    id: b.id, code: b.code,
+    kebeleId: b.kebeleId, kebeleName,
+    streetId: b.streetId, streetName, streetCode,
+    description: b.description ?? null, status: b.status,
+    createdAt: b.createdAt.toISOString(), updatedAt: b.updatedAt.toISOString(),
   };
 }
 
 // ─── KEBELE ROUTES ────────────────────────────────────────────────────────────
 
-// GET /kebeles
+// GET /kebeles — DB-level filtering (no in-memory full table scan)
 router.get("/kebeles", requireAuth, async (req, res): Promise<void> => {
   const { status, search } = req.query as Record<string, string>;
   const user = req.user!;
 
-  let rows = await db.select().from(kebelesTable).orderBy(kebelesTable.name);
+  const conditions: ReturnType<typeof eq>[] = [];
 
-  // Kebele officers and enumerators only see their own kebele (active)
   if (user.role === "kebele_officer" || user.role === "enumerator") {
-    rows = rows.filter((k) => k.status === "active" && (user.kebeleId == null || k.id === user.kebeleId));
+    // Restricted roles: active kebeles only, scoped to their assigned kebele
+    conditions.push(eq(kebelesTable.status, "active") as ReturnType<typeof eq>);
+    if (user.kebeleId) {
+      conditions.push(eq(kebelesTable.id, user.kebeleId) as ReturnType<typeof eq>);
+    }
   } else {
-    if (status) rows = rows.filter((k) => k.status === status);
+    if (status) conditions.push(eq(kebelesTable.status, status) as ReturnType<typeof eq>);
   }
 
   if (search) {
-    const q = search.toLowerCase();
-    rows = rows.filter((k) => k.name.toLowerCase().includes(q) || k.code.toLowerCase().includes(q));
+    conditions.push(
+      or(
+        ilike(kebelesTable.name, `%${search}%`),
+        ilike(kebelesTable.code, `%${search}%`),
+      ) as ReturnType<typeof eq>,
+    );
   }
 
-  res.json(await Promise.all(rows.map(formatKebele)));
+  const rows = await db
+    .select()
+    .from(kebelesTable)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(kebelesTable.name);
+
+  res.json(rows.map(formatKebele));
 });
 
 // POST /kebeles
@@ -138,7 +138,7 @@ router.post("/kebeles", requireAuth, requireRole("admin", "city_officer"), async
   }).returning();
 
   await writeAudit(req.user!.userId, "create_kebele", "kebele", created.id, `Created kebele ${created.name} (${created.code})`);
-  res.status(201).json(await formatKebele(created));
+  res.status(201).json(formatKebele(created));
 });
 
 // PUT /kebeles/:id
@@ -172,7 +172,7 @@ router.put("/kebeles/:id", requireAuth, requireRole("admin", "city_officer"), as
   }).where(eq(kebelesTable.id, id)).returning();
 
   await writeAudit(req.user!.userId, "update_kebele", "kebele", id, `Updated kebele ${updated.name}`);
-  res.json(await formatKebele(updated));
+  res.json(formatKebele(updated));
 });
 
 // DELETE /kebeles/:id
@@ -197,26 +197,70 @@ router.delete("/kebeles/:id", requireAuth, requireRole("admin"), async (req, res
 
 // ─── STREET ROUTES ────────────────────────────────────────────────────────────
 
-// GET /streets
+// GET /streets — single JOIN query; no N+1, no in-memory filtering
 router.get("/streets", requireAuth, async (req, res): Promise<void> => {
   const { kebele_id, status, search } = req.query as Record<string, string>;
   const user = req.user!;
 
-  let rows = await db.select().from(streetsTable).orderBy(streetsTable.name);
+  const conditions: ReturnType<typeof eq>[] = [];
 
   if (user.role === "kebele_officer" || user.role === "enumerator") {
-    rows = rows.filter((s) => s.status === "active" && (user.kebeleId == null || s.kebeleId === user.kebeleId));
+    conditions.push(eq(streetsTable.status, "active") as ReturnType<typeof eq>);
+    if (user.kebeleId) {
+      conditions.push(eq(streetsTable.kebeleId, user.kebeleId) as ReturnType<typeof eq>);
+    }
   } else {
-    if (kebele_id) rows = rows.filter((s) => s.kebeleId === parseInt(kebele_id, 10));
-    if (status) rows = rows.filter((s) => s.status === status);
+    if (kebele_id) {
+      const kid = parseInt(kebele_id, 10);
+      if (!isNaN(kid)) conditions.push(eq(streetsTable.kebeleId, kid) as ReturnType<typeof eq>);
+    }
+    if (status) conditions.push(eq(streetsTable.status, status) as ReturnType<typeof eq>);
   }
 
   if (search) {
-    const q = search.toLowerCase();
-    rows = rows.filter((s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q));
+    conditions.push(
+      or(
+        ilike(streetsTable.name, `%${search}%`),
+        ilike(streetsTable.code, `%${search}%`),
+      ) as ReturnType<typeof eq>,
+    );
   }
 
-  res.json(await Promise.all(rows.map(formatStreet)));
+  // Single JOIN query — resolves kebele name without N+1
+  const rows = await db
+    .select({
+      id: streetsTable.id,
+      name: streetsTable.name,
+      code: streetsTable.code,
+      kebeleId: streetsTable.kebeleId,
+      kebeleName: kebelesTable.name,
+      streetType: streetsTable.streetType,
+      roadSurface: streetsTable.roadSurface,
+      startLat: streetsTable.startLat,
+      startLng: streetsTable.startLng,
+      endLat: streetsTable.endLat,
+      endLng: streetsTable.endLng,
+      description: streetsTable.description,
+      status: streetsTable.status,
+      createdAt: streetsTable.createdAt,
+      updatedAt: streetsTable.updatedAt,
+    })
+    .from(streetsTable)
+    .leftJoin(kebelesTable, eq(streetsTable.kebeleId, kebelesTable.id))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(streetsTable.name);
+
+  res.json(
+    rows.map((s) => ({
+      id: s.id, name: s.name, code: s.code,
+      kebeleId: s.kebeleId, kebeleName: s.kebeleName ?? null,
+      streetType: s.streetType ?? null, roadSurface: s.roadSurface ?? null,
+      startLat: s.startLat ?? null, startLng: s.startLng ?? null,
+      endLat: s.endLat ?? null, endLng: s.endLng ?? null,
+      description: s.description ?? null, status: s.status,
+      createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(),
+    })),
+  );
 });
 
 // POST /streets
@@ -239,15 +283,10 @@ router.post("/streets", requireAuth, requireRole("admin", "city_officer"), async
   if (dup) { res.status(409).json({ error: "Street code already exists within this kebele" }); return; }
 
   const [created] = await db.insert(streetsTable).values({
-    name: name.trim(),
-    code: code.trim().toUpperCase(),
-    kebeleId,
-    streetType: streetType?.trim() || null,
-    roadSurface: roadSurface?.trim() || null,
-    startLat: startLat ?? null,
-    startLng: startLng ?? null,
-    endLat: endLat ?? null,
-    endLng: endLng ?? null,
+    name: name.trim(), code: code.trim().toUpperCase(), kebeleId,
+    streetType: streetType?.trim() || null, roadSurface: roadSurface?.trim() || null,
+    startLat: startLat ?? null, startLng: startLng ?? null,
+    endLat: endLat ?? null, endLng: endLng ?? null,
     description: description?.trim() || null,
     status: status || "active",
   }).returning();
@@ -280,9 +319,7 @@ router.put("/streets/:id", requireAuth, requireRole("admin", "city_officer"), as
   }
 
   const [updated] = await db.update(streetsTable).set({
-    name: name?.trim() || existing.name,
-    code: newCode,
-    kebeleId: newKebeleId,
+    name: name?.trim() || existing.name, code: newCode, kebeleId: newKebeleId,
     streetType: streetType !== undefined ? streetType?.trim() || null : existing.streetType,
     roadSurface: roadSurface !== undefined ? roadSurface?.trim() || null : existing.roadSurface,
     startLat: startLat !== undefined ? startLat : existing.startLat,
@@ -319,28 +356,65 @@ router.delete("/streets/:id", requireAuth, requireRole("admin"), async (req, res
 
 // ─── BLOCK ROUTES ─────────────────────────────────────────────────────────────
 
-// GET /blocks
+// GET /blocks — single JOIN query; no N+1, no in-memory filtering
 router.get("/blocks", requireAuth, async (req, res): Promise<void> => {
   const { kebele_id, street_id, status, search } = req.query as Record<string, string>;
   const user = req.user!;
 
-  let rows = await db.select().from(blocksTable).orderBy(blocksTable.code);
+  const conditions: ReturnType<typeof eq>[] = [];
 
   if (user.role === "kebele_officer" || user.role === "enumerator") {
-    rows = rows.filter((b) => b.status === "active" && (user.kebeleId == null || b.kebeleId === user.kebeleId));
+    conditions.push(eq(blocksTable.status, "active") as ReturnType<typeof eq>);
+    if (user.kebeleId) {
+      conditions.push(eq(blocksTable.kebeleId, user.kebeleId) as ReturnType<typeof eq>);
+    }
   } else {
-    if (kebele_id) rows = rows.filter((b) => b.kebeleId === parseInt(kebele_id, 10));
-    if (status) rows = rows.filter((b) => b.status === status);
+    if (kebele_id) {
+      const kid = parseInt(kebele_id, 10);
+      if (!isNaN(kid)) conditions.push(eq(blocksTable.kebeleId, kid) as ReturnType<typeof eq>);
+    }
+    if (status) conditions.push(eq(blocksTable.status, status) as ReturnType<typeof eq>);
   }
 
-  if (street_id) rows = rows.filter((b) => b.streetId === parseInt(street_id, 10));
+  if (street_id) {
+    const sid = parseInt(street_id, 10);
+    if (!isNaN(sid)) conditions.push(eq(blocksTable.streetId, sid) as ReturnType<typeof eq>);
+  }
 
   if (search) {
-    const q = search.toLowerCase();
-    rows = rows.filter((b) => b.code.toLowerCase().includes(q));
+    conditions.push(ilike(blocksTable.code, `%${search}%`) as ReturnType<typeof eq>);
   }
 
-  res.json(await Promise.all(rows.map(formatBlock)));
+  // Single JOIN resolves kebele + street names without N+1
+  const rows = await db
+    .select({
+      id: blocksTable.id,
+      code: blocksTable.code,
+      kebeleId: blocksTable.kebeleId,
+      kebeleName: kebelesTable.name,
+      streetId: blocksTable.streetId,
+      streetName: streetsTable.name,
+      streetCode: streetsTable.code,
+      description: blocksTable.description,
+      status: blocksTable.status,
+      createdAt: blocksTable.createdAt,
+      updatedAt: blocksTable.updatedAt,
+    })
+    .from(blocksTable)
+    .leftJoin(kebelesTable, eq(blocksTable.kebeleId, kebelesTable.id))
+    .leftJoin(streetsTable, eq(blocksTable.streetId, streetsTable.id))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(blocksTable.code);
+
+  res.json(
+    rows.map((b) => ({
+      id: b.id, code: b.code,
+      kebeleId: b.kebeleId, kebeleName: b.kebeleName ?? null,
+      streetId: b.streetId, streetName: b.streetName ?? null, streetCode: b.streetCode ?? null,
+      description: b.description ?? null, status: b.status,
+      createdAt: b.createdAt.toISOString(), updatedAt: b.updatedAt.toISOString(),
+    })),
+  );
 });
 
 // POST /blocks
@@ -361,9 +435,7 @@ router.post("/blocks", requireAuth, requireRole("admin", "city_officer"), async 
   if (dup) { res.status(409).json({ error: "Block code already exists within this street" }); return; }
 
   const [created] = await db.insert(blocksTable).values({
-    code: code.trim().toUpperCase(),
-    kebeleId,
-    streetId,
+    code: code.trim().toUpperCase(), kebeleId, streetId,
     description: description?.trim() || null,
     status: status || "active",
   }).returning();
