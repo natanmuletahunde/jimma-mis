@@ -125,14 +125,14 @@ export default function Login() {
       </div>
 
       {/* Right — login card */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:max-w-md lg:bg-white/5 lg:backdrop-blur-sm">
-        <div className="w-full max-w-sm">
+      <div className="flex-1 flex items-center justify-center p-6 lg:max-w-xl lg:bg-white/5 lg:backdrop-blur-sm">
+        <div className="w-full max-w-lg">
           {/* Card */}
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             {/* Card top accent bar */}
             <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #0d2447 0%, #1a5276 50%, #1e8449 100%)" }} />
 
-            <div className="px-8 pt-8 pb-6">
+            <div className="px-12 pt-10 pb-8">
               {/* Mobile logo */}
               <div className="flex flex-col items-center mb-6 lg:hidden">
                 <img
