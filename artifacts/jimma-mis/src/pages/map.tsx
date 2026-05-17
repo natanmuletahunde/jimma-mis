@@ -136,7 +136,7 @@ export default function MapView() {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef     = useRef<L.LayerGroup | null>(null);
   // Track every marker by property ID so we can programmatically open one
-  const markerMapRef   = useRef<Map<number, L.Marker>>(new Map());
+  const markerMapRef   = useRef<Record<number, L.Marker>>({});
   // Only fly-to once per deep-link visit
   const didFlyRef      = useRef(false);
 
@@ -197,7 +197,7 @@ export default function MapView() {
   useEffect(() => {
     if (!mapInstanceRef.current || !markersRef.current || !properties) return;
     markersRef.current.clearLayers();
-    markerMapRef.current.clear();
+    markerMapRef.current = {};
 
     properties.forEach((prop) => {
       if (prop.latitude == null || prop.longitude == null) return;
@@ -250,21 +250,21 @@ export default function MapView() {
       );
 
       markersRef.current?.addLayer(marker);
-      markerMapRef.current.set(prop.id, marker);
+      markerMapRef.current[prop.id] = marker;
     });
 
     // Deep-link: fly to targeted property and open its popup (only once)
     if (targetId && targetLat && targetLng && !didFlyRef.current) {
       didFlyRef.current = true;
+      // Capture the marker now — don't read markerMapRef inside the timeout
+      // (the ref's .current may be replaced by a subsequent render before it fires)
+      const targetMarker = markerMapRef.current[targetId] ?? null;
       mapInstanceRef.current.flyTo([targetLat, targetLng], 18, {
         animate: true,
         duration: 1.2,
       });
       // Open popup after the fly animation settles
-      setTimeout(() => {
-        const marker = markerMapRef.current.get(targetId);
-        marker?.openPopup();
-      }, 1400);
+      setTimeout(() => targetMarker?.openPopup(), 1400);
     }
   }, [properties, targetId, targetLat, targetLng]);
 
