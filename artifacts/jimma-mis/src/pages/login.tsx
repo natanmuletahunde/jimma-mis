@@ -94,14 +94,8 @@ export default function Login() {
           <img
             src="/logo.png"
             alt="Jimma City MIS Logo"
-            className="w-48 h-48 object-contain mx-auto mb-8 drop-shadow-2xl"
+            className="w-56 h-56 object-contain mx-auto mb-8 drop-shadow-2xl"
           />
-          <h1 className="text-4xl font-extrabold text-white leading-tight mb-3">
-            Jimma City
-          </h1>
-          <p className="text-lg font-semibold text-emerald-300 mb-2 tracking-wide">
-            Street & House Registration System
-          </p>
           <div className="flex items-center gap-2 justify-center mt-4">
             {["Register", "Manage", "Secure", "Serve"].map((w, i) => (
               <span key={w} className="flex items-center gap-2">
@@ -144,12 +138,8 @@ export default function Login() {
                 <img
                   src="/logo.png"
                   alt="Jimma City MIS"
-                  className="w-24 h-24 object-contain mb-3"
+                  className="w-28 h-28 object-contain mb-3"
                 />
-                <h2 className="text-xl font-bold text-[#0d2447]">Jimma City MIS</h2>
-                <p className="text-xs text-emerald-700 font-medium mt-0.5">
-                  Street & House Registration System
-                </p>
               </div>
 
               {/* ── LOGIN VIEW ── */}
