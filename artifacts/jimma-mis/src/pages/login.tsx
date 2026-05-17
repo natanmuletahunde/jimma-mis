@@ -146,11 +146,11 @@ export default function Login() {
               {view === "login" && (
                 <>
                   <div className="mb-6 hidden lg:block">
-                    <h2 className="text-2xl font-bold text-[#0d2447]">Welcome back</h2>
-                    <p className="text-sm text-gray-500 mt-1">Sign in to your account to continue</p>
+                    <h2 className="text-3xl font-extrabold text-black">Welcome back</h2>
+                    <p className="text-base text-black font-medium mt-1">Sign in to your account to continue</p>
                   </div>
                   <div className="mb-6 lg:hidden">
-                    <h2 className="text-lg font-bold text-[#0d2447] text-center">Sign In</h2>
+                    <h2 className="text-2xl font-extrabold text-black text-center">Sign In</h2>
                   </div>
 
                   {login.isError && (
@@ -162,11 +162,11 @@ export default function Login() {
 
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="username" className="text-[#0d2447] font-medium text-sm">
+                      <Label htmlFor="username" className="text-black font-semibold text-base">
                         Username
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                         <Input
                           id="username"
                           type="text"
@@ -175,17 +175,17 @@ export default function Login() {
                           onChange={(e) => setUsername(e.target.value)}
                           required
                           disabled={login.isPending}
-                          className="pl-9 border-gray-200 focus:border-[#1a5276] focus:ring-[#1a5276]/20"
+                          className="pl-10 h-12 text-base text-black placeholder:text-gray-400 border-gray-300 focus:border-[#1a5276] focus:ring-[#1a5276]/20"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-[#0d2447] font-medium text-sm">
+                      <Label htmlFor="password" className="text-black font-semibold text-base">
                         Password
                       </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
@@ -194,15 +194,15 @@ export default function Login() {
                           onChange={(e) => setPassword(e.target.value)}
                           required
                           disabled={login.isPending}
-                          className="pl-9 pr-10 border-gray-200 focus:border-[#1a5276] focus:ring-[#1a5276]/20"
+                          className="pl-10 pr-10 h-12 text-base text-black placeholder:text-gray-400 border-gray-300 focus:border-[#1a5276] focus:ring-[#1a5276]/20"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                           tabIndex={-1}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setView("forgot")}
-                        className="text-xs text-emerald-700 hover:text-emerald-900 font-medium transition-colors"
+                        className="text-sm text-black font-semibold hover:underline transition-colors"
                       >
                         Forgot password?
                       </button>
@@ -219,7 +219,7 @@ export default function Login() {
 
                     <Button
                       type="submit"
-                      className="w-full mt-1 text-sm font-semibold"
+                      className="w-full mt-1 text-base font-bold h-12"
                       style={{ background: "linear-gradient(90deg, #0d2447 0%, #1a5276 100%)" }}
                       disabled={login.isPending || !username || !password}
                     >
@@ -381,18 +381,18 @@ export default function Login() {
 
             {/* Footer */}
             <div
-              className="px-8 py-3 flex items-center justify-center gap-2 border-t border-gray-100"
-              style={{ background: "#f8fafc" }}
+              className="px-8 py-4 flex items-center justify-center gap-2 border-t border-gray-200"
+              style={{ background: "#f0f4f8" }}
             >
-              <Lock className="h-3 w-3 text-gray-400" />
-              <span className="text-xs text-gray-400 font-medium">
+              <Lock className="h-4 w-4 text-black" />
+              <span className="text-sm text-black font-semibold">
                 Authorized personnel only — Jimma City Administration
               </span>
             </div>
           </div>
 
           {/* Below card note */}
-          <p className="text-center text-[11px] text-white/40 mt-6">
+          <p className="text-center text-sm text-black font-medium mt-6">
             © {new Date().getFullYear()} Jimma City Administration. All rights reserved.
           </p>
         </div>
