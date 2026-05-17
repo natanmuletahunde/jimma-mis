@@ -81,20 +81,20 @@ export default function Login() {
   return (
     <div
       className="min-h-screen flex items-stretch"
-      style={{ background: "linear-gradient(135deg, #0d2447 0%, #0d3d6e 50%, #0a5c3e 100%)" }}
+      style={{ background: "linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)" }}
     >
       {/* Left branding panel — hidden on small screens */}
       <div className="hidden lg:flex flex-col items-center justify-center flex-1 px-12 py-16 relative overflow-hidden">
         {/* Decorative circles */}
-        <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-white/5" />
-        <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-white/5" />
-        <div className="absolute top-1/2 left-[-40px] w-32 h-32 rounded-full bg-green-500/10" />
+        <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-blue-300/30" />
+        <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-blue-200/30" />
+        <div className="absolute top-1/2 left-[-40px] w-32 h-32 rounded-full bg-blue-400/20" />
 
         <div className="relative z-10 max-w-sm text-center">
           <img
             src="/logo.png"
             alt="Jimma City MIS Logo"
-            className="w-72 h-72 object-contain mx-auto mb-8 drop-shadow-2xl"
+            className="w-96 h-96 object-contain mx-auto mb-6 drop-shadow-2xl"
           />
           <div className="flex items-center gap-2 justify-center mt-4">
             {["Register", "Manage", "Secure", "Serve"].map((w, i) => (
