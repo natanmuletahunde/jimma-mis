@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,10 @@ export function Sidebar() {
 
       <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
         {mainNav.map((item) => <NavLink key={item.href} {...item} />)}
+
+        {(user?.role === "enumerator") && (
+          <NavLink href="/mobile/field-collection" label="Mobile Collection" icon={Smartphone} />
+        )}
 
         {(user?.role === "admin" || user?.role === "city_officer") && (
           <NavLink href="/users" label="Users" icon={Users} />

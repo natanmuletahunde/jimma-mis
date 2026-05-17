@@ -1,0 +1,25 @@
+{
+  "name": "Jimma City Digital Street Address MIS",
+  "short_name": "Jimma MIS",
+  "description": "Mobile field data collection for Jimma City property registration",
+  "start_url": "./mobile/field-collection",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/auth-provider";
 import { useAuth } from "@/hooks/use-auth";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { MobileLayout } from "@/pages/mobile/MobileLayout";
 import NotFound from "@/pages/not-found";
 
 import Login from "@/pages/login";
@@ -19,6 +20,11 @@ import LocationsSetup from "@/pages/setup/locations";
 import StreetsSetup from "@/pages/setup/streets";
 import BlocksSetup from "@/pages/setup/blocks";
 import AuditLogs from "@/pages/audit-logs";
+
+import FieldCollection from "@/pages/mobile/field-collection";
+import OfflineDrafts from "@/pages/mobile/offline-drafts";
+import SyncedRecords from "@/pages/mobile/synced";
+import RejectedRecords from "@/pages/mobile/rejected";
 
 import 'leaflet/dist/leaflet.css';
 
@@ -57,10 +63,30 @@ function ProtectedRoutes() {
   );
 }
 
+function MobileRoutes() {
+  return (
+    <Switch>
+      <Route path="/mobile/field-collection" component={FieldCollection} />
+      <Route path="/mobile/offline-drafts" component={OfflineDrafts} />
+      <Route path="/mobile/synced" component={SyncedRecords} />
+      <Route path="/mobile/rejected" component={RejectedRecords} />
+      <Route path="/mobile">
+        <Redirect to="/mobile/field-collection" />
+      </Route>
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/mobile/:rest*">
+        <MobileLayout>
+          <MobileRoutes />
+        </MobileLayout>
+      </Route>
       <Route path="*">
         <AppLayout>
           <ProtectedRoutes />

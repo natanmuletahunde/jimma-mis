@@ -1,0 +1,167 @@
+Now continue from the existing Jimma City Digital Street Address MIS project.
+
+Your task is to build the Mobile/PWA Offline Field Data Collection module.
+
+Do not recreate the project. Inspect existing files first and extend them.
+
+Implement the following:
+
+1. Make the frontend a Progressive Web App
+
+Add:
+- manifest.json
+- service worker
+- installable app support
+- app icon placeholders
+- offline fallback page
+- cache core frontend assets
+
+System name:
+Jimma City Digital Street Address MIS
+
+2. Mobile Enumerator Interface
+
+Create or improve route:
+
+/mobile/field-collection
+
+This page should be optimized for mobile use.
+
+Features:
+- large buttons
+- simple form sections
+- GPS capture button
+- camera/photo upload button
+- save offline draft
+- submit when online
+- sync status indicator
+- clear validation messages
+
+3. Offline Draft Storage
+
+Use IndexedDB or localStorage for MVP.
+
+Store offline drafts with:
+
+- temporary local ID
+- kebele
+- street
+- block
+- house number
+- owner name
+- owner phone
+- property type
+- latitude
+- longitude
+- photo reference if possible
+- status: Offline Draft
+- created_at
+- synced: false
+
+4. Online/Offline Detection
+
+Add:
+
+- online/offline indicator
+- show “Offline Mode” banner when disconnected
+- disable direct submit when offline
+- allow Save Offline Draft when offline
+- auto-detect when connection returns
+
+5. Sync Module
+
+Create sync logic:
+
+When online:
+- list unsynced offline drafts
+- allow user to sync one by one
+- allow sync all
+- call existing POST /api/properties endpoint
+- upload photo if supported
+- mark draft as synced after success
+- show failed sync reason if rejected by backend validation
+
+6. Mobile GPS and Photo Rules
+
+Before saving or syncing:
+
+- allow draft without GPS
+- require GPS before submit/sync
+- require front view photo before submit/sync
+- validate latitude and longitude
+- show clear message if GPS permission denied
+
+7. Enumerator Restrictions
+
+Enumerator should see:
+
+- own online drafts
+- own rejected records
+- own offline drafts
+- own synced records
+
+Enumerator should not see other users’ data.
+
+8. Mobile Navigation
+
+Add a simple mobile-friendly menu:
+
+- New Property
+- Offline Drafts
+- Synced Records
+- Rejected for Correction
+- Sync Now
+- Logout
+
+9. Offline Drafts Page
+
+Create route:
+
+/mobile/offline-drafts
+
+Show:
+
+- owner name
+- kebele
+- street
+- house number
+- created date
+- synced status
+- edit button
+- delete local draft button
+- sync button
+
+10. Sync Error Handling
+
+If sync fails because:
+
+- duplicate house number
+- missing GPS
+- missing photo
+- invalid field
+- unauthorized user
+
+Show readable error message and keep draft unsynced.
+
+11. Final Check
+
+After implementation, test:
+
+- app is installable as PWA
+- mobile page works on phone-size screen
+- offline banner appears
+- offline draft saves
+- offline draft edits
+- offline draft deletes
+- sync works after reconnect
+- failed sync shows clear error
+- GPS capture works
+- photo preview works
+- enumerator cannot see others’ records
+
+Provide:
+- files changed
+- PWA files added
+- routes created
+- testing steps
+- known issues
