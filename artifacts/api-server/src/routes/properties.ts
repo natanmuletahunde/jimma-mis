@@ -21,6 +21,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import { auditReq } from "../lib/audit";
+import { sendKebeleVerifiedSms, sendCityApprovedSms } from "../lib/sms";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, "../uploads");
@@ -454,6 +455,18 @@ router.post("/properties/:id/approve", requireAuth, requireRole("admin", "city_o
     oldValue: existing.status, newValue: newStatus,
     details: remark ?? null,
   });
+
+  // Fire-and-forget SMS alerts to the property owner
+  const phone = existing.ownerPhone?.trim();
+  if (phone) {
+    const displayAddress = `${existing.streetName}${existing.houseNumber ? " #" + existing.houseNumber : ""}, ${existing.kebele}`;
+    if (newStatus === "kebele_verified") {
+      sendKebeleVerifiedSms(existing.ownerName, phone, displayAddress, req.log).catch(() => {});
+    } else if (newStatus === "approved") {
+      sendCityApprovedSms(existing.ownerName, phone, updated.addressCode ?? addressCode ?? "", req.log).catch(() => {});
+    }
+  }
+
   res.json(serializeProperty(updated, null));
 });
 
