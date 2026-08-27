@@ -1,0 +1,44 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "UoI6TwCbW6t6M9BI-RYh1"
+uri = "file://documentation/pdf/01-functional-and-non-functional-requirements.pdf"
+type = "pdf"
+title = "Functional and Non-Functional Requirements"
+description = "Requirements baseline, quality requirements, and acceptance checklist."
+
+[[outputs]]
+id = "xNjMjY0rLFJT5Hpzbk76x"
+uri = "file://documentation/pdf/02-technology-and-deployment-strategy.pdf"
+type = "pdf"
+title = "Technology and Deployment Strategy"
+description = "Technology stack, architecture, release strategy, backup, monitoring, and continuity guidance."
+
+[[outputs]]
+id = "FkMkuRA2WmnuIhnfIPopO"
+uri = "file://documentation/pdf/03-hands-on-user-manual-with-screenshots.pdf"
+type = "pdf"
+title = "Hands-on User Manual with Screenshots"
+description = "Step-by-step guide for sign-in, property registration, offline field collection, review, approval, SMS alerts, and troubleshooting."
+
+[[outputs]]
+id = "VKqLsh3jfwOMXebY1UsJr"
+uri = "file://documentation/pdf/04-user-list-and-access-matrix.pdf"
+type = "pdf"
+title = "User List and Access Matrix"
+description = "Supported roles, permission matrix, demo accounts, user provisioning checklist, and user register template."
+
+[[outputs]]
+id = "R-dgaOb9S5TUwdhAw-qNJ"
+uri = "file://documentation/pdf/05-property-registration-workflow.pdf"
+type = "pdf"
+title = "Property Registration Workflow"
+description = "End-to-end workflow, actor responsibilities, status transitions, address code generation, notifications, and exception handling."
+
+[[outputs]]
+id = "5LWgvcx5l021KNOc7MsZs"
+uri = "file://jimma-mis-documentation-package.zip"
+type = "unspecified"
+title = "Complete Jimma MIS Documentation Package"
+description = "ZIP bundle containing all five PDFs, source assets, and the documentation index."
