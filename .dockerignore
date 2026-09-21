@@ -1,0 +1,6 @@
+node_modules
+.env
+.git
+artifacts/api-server/dist
+artifacts/jimma-mis/dist
+artifacts/mockup-sandbox/dist
