@@ -2,25 +2,11 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@latest
-
-# Copy dependency files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY artifacts/api-server/package.json ./artifacts/api-server/
-COPY artifacts/jimma-mis/package.json ./artifacts/jimma-mis/
-COPY artifacts/mockup-sandbox/package.json ./artifacts/mockup-sandbox/
-COPY lib/db/package.json ./lib/db/
-COPY lib/api-zod/package.json ./lib/api-zod/
-COPY lib/api-client-react/package.json ./lib/api-client-react/
-COPY lib/api-spec/package.json ./lib/api-spec/
-COPY scripts/package.json ./scripts/
-
-# Install dependencies
-RUN pnpm install
-
-# Copy source code
+# Copy all files (node_modules, .env, .git are excluded by .dockerignore)
 COPY . .
+
+# Install pnpm and dependencies
+RUN npm install -g pnpm@latest && pnpm install --no-frozen-lockfile
 
 # Build the entire monorepo
 RUN pnpm run build
