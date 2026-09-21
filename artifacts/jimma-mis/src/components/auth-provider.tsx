@@ -18,7 +18,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const loginMutation = useLogin();
+  const loginMutation = useLogin({
+    mutation: {
+      onSuccess: (data) => {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        setToken(data.token);
+        queryClient.setQueryData(getGetMeQueryKey(), data.user);
+      },
+    },
+  });
 
   const logout = useCallback(() => {
     // Fire-and-forget: record the logout server-side before clearing the token
@@ -43,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [loginMutation.isSuccess, loginMutation.data, queryClient]);
 
-  const isLoading = token ? isUserLoading : false;
+  const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null);
+  const isLoading = Boolean(activeToken && !user && isUserLoading);
 
   return (
     <AuthContext.Provider

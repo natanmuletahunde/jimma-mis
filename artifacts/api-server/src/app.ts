@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
@@ -47,6 +48,23 @@ const uploadsDir = path.resolve(__dirname, "../uploads");
 app.use("/api/uploads", express.static(uploadsDir));
 
 app.use("/api", router);
+
+const clientDistCandidates = [
+  path.resolve(__dirname, "../../jimma-mis/dist/public"),
+  path.resolve(process.cwd(), "artifacts/jimma-mis/dist/public"),
+];
+const clientDist = clientDistCandidates.find((dir) => fs.existsSync(dir));
+
+if (clientDist) {
+  logger.info({ clientDist }, "Serving static frontend assets");
+  app.use(express.static(clientDist));
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === "GET" && !req.path.startsWith("/api")) {
+      return res.sendFile(path.join(clientDist, "index.html"));
+    }
+    next();
+  });
+}
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Not found" });

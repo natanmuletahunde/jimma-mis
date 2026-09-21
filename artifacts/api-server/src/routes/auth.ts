@@ -124,7 +124,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
     .where(eq(usersTable.id, user.id));
 
   // Build reset link using the request host
-  const proto = req.headers["x-forwarded-proto"] ?? "https";
+  const proto = req.headers["x-forwarded-proto"] ?? (req.get("host")?.includes("localhost") ? "http" : req.secure ? "https" : "http");
   const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "";
   const resetLink = `${proto}://${host}/reset-password?token=${resetToken}`;
 

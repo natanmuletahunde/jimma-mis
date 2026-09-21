@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,14 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/dashboard");
+    }
+  }, [user, setLocation]);
 
   // Forgot password state
   const [forgotUsername, setForgotUsername] = useState("");
@@ -45,8 +51,13 @@ export default function Login() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     login.mutate(
-      { data: { username, password } },
-      { onSuccess: () => setLocation("/dashboard") }
+      { data: { username: username.trim(), password } },
+      {
+        onSuccess: (data) => {
+          localStorage.setItem("jimma_token", data.token);
+          setLocation("/dashboard");
+        },
+      }
     );
   };
 

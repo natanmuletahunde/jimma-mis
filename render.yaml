@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: jimma-city-mis
+    runtime: node
+    plan: free
+    region: ohio
+    buildCommand: npm install -g pnpm && pnpm install && pnpm run build
+    startCommand: node artifacts/api-server/dist/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_APP_PASSWORD
+        sync: false
+      - key: AT_USERNAME
+        value: sandbox
+      - key: AT_API_KEY
+        sync: false

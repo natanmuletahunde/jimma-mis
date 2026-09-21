@@ -10,16 +10,18 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, token } = useAuth();
   const [location, setLocation] = useLocation();
 
+  const hasToken = Boolean(token || (typeof window !== "undefined" && localStorage.getItem("jimma_token")));
+
   useEffect(() => {
-    if (!isLoading && !user && location !== "/login") {
+    if (!isLoading && !user && !hasToken && location !== "/login") {
       setLocation("/login");
     }
-  }, [user, isLoading, location, setLocation]);
+  }, [user, isLoading, hasToken, location, setLocation]);
 
-  if (isLoading) {
+  if (isLoading || (hasToken && !user)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

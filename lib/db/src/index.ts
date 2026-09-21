@@ -10,7 +10,19 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 20000,
+  connectionTimeoutMillis: 15000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
+});
+
+pool.on("error", (err) => {
+  console.warn("[DB Pool] Idle client disconnect (expected in serverless):", err.message);
+});
+
 export const db = drizzle(pool, { schema });
 
 export async function testConnection(): Promise<{ ok: boolean; error?: string }> {
