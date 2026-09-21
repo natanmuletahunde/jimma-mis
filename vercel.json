@@ -1,0 +1,11 @@
+{
+  "buildCommand": "pnpm --filter @workspace/jimma-mis run build",
+  "outputDirectory": "artifacts/jimma-mis/dist/public",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
