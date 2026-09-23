@@ -12,7 +12,7 @@ import {
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,6 +30,8 @@ import {
   Plus,
   Trash2,
   ImageIcon,
+  QrCode,
+  Printer,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -42,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { AddressPlate, AddressPlateModal } from "@/components/address-plate";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -146,6 +149,7 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
 
   const [remark, setRemark] = useState("");
   const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [isPlateModalOpen, setIsPlateModalOpen] = useState(false);
   const [addCategory, setAddCategory] = useState("front_view");
   const [photoUploading, setPhotoUploading] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<number | null>(null);
@@ -325,6 +329,17 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
+          {property.addressCode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPlateModalOpen(true)}
+              className="gap-1.5 border-emerald-600/40 text-emerald-800 hover:bg-emerald-50 dark:text-emerald-300 dark:border-emerald-600/60"
+            >
+              <QrCode className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              Address Plate &amp; QR
+            </Button>
+          )}
           {property.status === "approved" && property.addressCode ? (
             <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-mono font-bold text-lg tracking-wider border border-primary/20 shadow-sm">
               {property.addressCode}
@@ -462,6 +477,42 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Official Municipal Digital Address Plate & QR Code */}
+        {property.addressCode && (
+          <Card className="md:col-span-2 overflow-hidden border-emerald-300/60 dark:border-emerald-700/60 shadow-md">
+            <CardHeader className="bg-emerald-50/70 dark:bg-emerald-950/40 pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2 text-emerald-950 dark:text-emerald-200">
+                  <QrCode className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+                  Official Municipal Digital Address Plate &amp; QR Code
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Standard 20cm × 13cm embossed metal signage specification with scannable verification QR code
+                </CardDescription>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setIsPlateModalOpen(true)}
+                className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white"
+              >
+                <Printer className="w-4 h-4" /> Enlarge &amp; Print Plate
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-6 pb-6 flex justify-center bg-slate-50/50 dark:bg-slate-900/30">
+              <AddressPlate
+                addressCode={property.addressCode}
+                ownerName={property.ownerName}
+                kebele={property.kebele}
+                streetName={property.streetName}
+                houseNumber={property.houseNumber}
+                blockCode={property.blockCode}
+                buildingUse={property.buildingUse}
+                isProvisional={property.status !== "approved"}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Photo Gallery */}
         <Card className="md:col-span-2">
@@ -618,6 +669,23 @@ export default function PropertyShow({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
       </div>
+
+      {property.addressCode && (
+        <AddressPlateModal
+          open={isPlateModalOpen}
+          onOpenChange={setIsPlateModalOpen}
+          props={{
+            addressCode: property.addressCode,
+            ownerName: property.ownerName,
+            kebele: property.kebele,
+            streetName: property.streetName,
+            houseNumber: property.houseNumber,
+            blockCode: property.blockCode,
+            buildingUse: property.buildingUse,
+            isProvisional: property.status !== "approved",
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -45,6 +45,7 @@ import type {
   ListBlocksParams,
   ListKebelesParams,
   ListPropertiesParams,
+  ListRoadMaintenanceRecordsParams,
   ListStreetsParams,
   ListUsersParams,
   LoginInput,
@@ -56,6 +57,9 @@ import type {
   PropertyUpdate,
   RejectionInput,
   ReportResponse,
+  RoadInventorySummary,
+  RoadMaintenanceRecord,
+  RoadMaintenanceRecordInput,
   RoleItem,
   Street,
   StreetInput,
@@ -2951,6 +2955,457 @@ export const useDeleteStreet = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteStreetMutationOptions(options));
+    }
+
+export const getGetStreetMaintenanceHistoryUrl = (id: number,) => {
+
+
+
+
+  return `/api/streets/${id}/maintenance`
+}
+
+/**
+ * @summary Get maintenance history and inspection logs for a specific street
+ */
+export const getStreetMaintenanceHistory = async (id: number, options?: RequestInit): Promise<RoadMaintenanceRecord[]> => {
+
+  return customFetch<RoadMaintenanceRecord[]>(getGetStreetMaintenanceHistoryUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStreetMaintenanceHistoryQueryKey = (id: number,) => {
+    return [
+    `/api/streets/${id}/maintenance`
+    ] as const;
+    }
+
+
+export const getGetStreetMaintenanceHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getStreetMaintenanceHistory>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStreetMaintenanceHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStreetMaintenanceHistoryQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStreetMaintenanceHistory>>> = ({ signal }) => getStreetMaintenanceHistory(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStreetMaintenanceHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStreetMaintenanceHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getStreetMaintenanceHistory>>>
+export type GetStreetMaintenanceHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get maintenance history and inspection logs for a specific street
+ */
+
+export function useGetStreetMaintenanceHistory<TData = Awaited<ReturnType<typeof getStreetMaintenanceHistory>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStreetMaintenanceHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStreetMaintenanceHistoryQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetRoadInventorySummaryUrl = () => {
+
+
+
+
+  return `/api/road-inventory/summary`
+}
+
+/**
+ * @summary Get city-wide road network and pavement condition summary
+ */
+export const getRoadInventorySummary = async ( options?: RequestInit): Promise<RoadInventorySummary> => {
+
+  return customFetch<RoadInventorySummary>(getGetRoadInventorySummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoadInventorySummaryQueryKey = () => {
+    return [
+    `/api/road-inventory/summary`
+    ] as const;
+    }
+
+
+export const getGetRoadInventorySummaryQueryOptions = <TData = Awaited<ReturnType<typeof getRoadInventorySummary>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoadInventorySummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoadInventorySummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoadInventorySummary>>> = ({ signal }) => getRoadInventorySummary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoadInventorySummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRoadInventorySummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getRoadInventorySummary>>>
+export type GetRoadInventorySummaryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get city-wide road network and pavement condition summary
+ */
+
+export function useGetRoadInventorySummary<TData = Awaited<ReturnType<typeof getRoadInventorySummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoadInventorySummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRoadInventorySummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListRoadMaintenanceRecordsUrl = (params?: ListRoadMaintenanceRecordsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/road-inventory/records?${stringifiedParams}` : `/api/road-inventory/records`
+}
+
+/**
+ * @summary List road maintenance and inspection records
+ */
+export const listRoadMaintenanceRecords = async (params?: ListRoadMaintenanceRecordsParams, options?: RequestInit): Promise<RoadMaintenanceRecord[]> => {
+
+  return customFetch<RoadMaintenanceRecord[]>(getListRoadMaintenanceRecordsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRoadMaintenanceRecordsQueryKey = (params?: ListRoadMaintenanceRecordsParams,) => {
+    return [
+    `/api/road-inventory/records`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListRoadMaintenanceRecordsQueryOptions = <TData = Awaited<ReturnType<typeof listRoadMaintenanceRecords>>, TError = ErrorType<unknown>>(params?: ListRoadMaintenanceRecordsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRoadMaintenanceRecords>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRoadMaintenanceRecordsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoadMaintenanceRecords>>> = ({ signal }) => listRoadMaintenanceRecords(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRoadMaintenanceRecords>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListRoadMaintenanceRecordsQueryResult = NonNullable<Awaited<ReturnType<typeof listRoadMaintenanceRecords>>>
+export type ListRoadMaintenanceRecordsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List road maintenance and inspection records
+ */
+
+export function useListRoadMaintenanceRecords<TData = Awaited<ReturnType<typeof listRoadMaintenanceRecords>>, TError = ErrorType<unknown>>(
+ params?: ListRoadMaintenanceRecordsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRoadMaintenanceRecords>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListRoadMaintenanceRecordsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateRoadMaintenanceRecordUrl = () => {
+
+
+
+
+  return `/api/road-inventory/records`
+}
+
+/**
+ * @summary Log a new maintenance activity or PCI inspection
+ */
+export const createRoadMaintenanceRecord = async (roadMaintenanceRecordInput: RoadMaintenanceRecordInput, options?: RequestInit): Promise<RoadMaintenanceRecord> => {
+
+  return customFetch<RoadMaintenanceRecord>(getCreateRoadMaintenanceRecordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      roadMaintenanceRecordInput,)
+  }
+);}
+
+
+
+
+export const getCreateRoadMaintenanceRecordMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRoadMaintenanceRecord>>, TError,{data: BodyType<RoadMaintenanceRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRoadMaintenanceRecord>>, TError,{data: BodyType<RoadMaintenanceRecordInput>}, TContext> => {
+
+const mutationKey = ['createRoadMaintenanceRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRoadMaintenanceRecord>>, {data: BodyType<RoadMaintenanceRecordInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createRoadMaintenanceRecord(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRoadMaintenanceRecordMutationResult = NonNullable<Awaited<ReturnType<typeof createRoadMaintenanceRecord>>>
+    export type CreateRoadMaintenanceRecordMutationBody = BodyType<RoadMaintenanceRecordInput>
+    export type CreateRoadMaintenanceRecordMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Log a new maintenance activity or PCI inspection
+ */
+export const useCreateRoadMaintenanceRecord = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRoadMaintenanceRecord>>, TError,{data: BodyType<RoadMaintenanceRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRoadMaintenanceRecord>>,
+        TError,
+        {data: BodyType<RoadMaintenanceRecordInput>},
+        TContext
+      > => {
+      return useMutation(getCreateRoadMaintenanceRecordMutationOptions(options));
+    }
+
+export const getUpdateRoadMaintenanceRecordUrl = (id: number,) => {
+
+
+
+
+  return `/api/road-inventory/records/${id}`
+}
+
+/**
+ * @summary Update a maintenance record
+ */
+export const updateRoadMaintenanceRecord = async (id: number,
+    roadMaintenanceRecordInput: RoadMaintenanceRecordInput, options?: RequestInit): Promise<RoadMaintenanceRecord> => {
+
+  return customFetch<RoadMaintenanceRecord>(getUpdateRoadMaintenanceRecordUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      roadMaintenanceRecordInput,)
+  }
+);}
+
+
+
+
+export const getUpdateRoadMaintenanceRecordMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>, TError,{id: number;data: BodyType<RoadMaintenanceRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>, TError,{id: number;data: BodyType<RoadMaintenanceRecordInput>}, TContext> => {
+
+const mutationKey = ['updateRoadMaintenanceRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>, {id: number;data: BodyType<RoadMaintenanceRecordInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateRoadMaintenanceRecord(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRoadMaintenanceRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>>
+    export type UpdateRoadMaintenanceRecordMutationBody = BodyType<RoadMaintenanceRecordInput>
+    export type UpdateRoadMaintenanceRecordMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a maintenance record
+ */
+export const useUpdateRoadMaintenanceRecord = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>, TError,{id: number;data: BodyType<RoadMaintenanceRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRoadMaintenanceRecord>>,
+        TError,
+        {id: number;data: BodyType<RoadMaintenanceRecordInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateRoadMaintenanceRecordMutationOptions(options));
+    }
+
+export const getDeleteRoadMaintenanceRecordUrl = (id: number,) => {
+
+
+
+
+  return `/api/road-inventory/records/${id}`
+}
+
+/**
+ * @summary Delete a maintenance record
+ */
+export const deleteRoadMaintenanceRecord = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteRoadMaintenanceRecordUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRoadMaintenanceRecordMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteRoadMaintenanceRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteRoadMaintenanceRecord(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRoadMaintenanceRecordMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>>
+
+    export type DeleteRoadMaintenanceRecordMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a maintenance record
+ */
+export const useDeleteRoadMaintenanceRecord = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRoadMaintenanceRecord>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRoadMaintenanceRecordMutationOptions(options));
     }
 
 export const getListBlocksUrl = (params?: ListBlocksParams,) => {

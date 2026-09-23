@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Search, Eye, MapPin } from "lucide-react";
+import { Loader2, Search, Eye, MapPin, QrCode } from "lucide-react";
+import { AddressPlateModal, AddressPlateProps } from "@/components/address-plate";
 
 export default function PropertiesList() {
   const [, navigate] = useLocation();
@@ -16,6 +17,7 @@ export default function PropertiesList() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [propertyType, setPropertyType] = useState<string>("all");
+  const [selectedPlateProp, setSelectedPlateProp] = useState<AddressPlateProps | null>(null);
 
   const { data, isLoading } = useListProperties(
     {
@@ -165,6 +167,36 @@ export default function PropertiesList() {
                               </Tooltip>
                             )}
 
+                            {/* View & Print Address Plate — when addressCode exists */}
+                            {property.addressCode && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-400"
+                                    onClick={() =>
+                                      setSelectedPlateProp({
+                                        addressCode: property.addressCode!,
+                                        ownerName: property.ownerName,
+                                        kebele: property.kebele,
+                                        streetName: property.streetName,
+                                        houseNumber: property.houseNumber,
+                                        blockCode: property.blockCode,
+                                        buildingUse: property.buildingUse,
+                                        isProvisional: property.status !== "approved",
+                                      })
+                                    }
+                                  >
+                                    <QrCode className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  <p>Digital Address Plate &amp; QR</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+
                             <Link href={`/properties/${property.id}`}>
                               <Button variant="ghost" size="sm">
                                 <Eye className="w-4 h-4 mr-2" />
@@ -207,6 +239,14 @@ export default function PropertiesList() {
             )}
           </CardContent>
         </Card>
+
+        {selectedPlateProp && (
+          <AddressPlateModal
+            open={!!selectedPlateProp}
+            onOpenChange={(open) => !open && setSelectedPlateProp(null)}
+            props={selectedPlateProp}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

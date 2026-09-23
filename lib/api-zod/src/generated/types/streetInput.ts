@@ -5,6 +5,8 @@
  * Jimma City Digital Street Address MIS API
  * OpenAPI spec version: 0.1.0
  */
+import type { StreetInputCondition } from './streetInputCondition';
+import type { StreetInputMaintenancePriority } from './streetInputMaintenancePriority';
 import type { StreetInputStatus } from './streetInputStatus';
 
 export interface StreetInput {
@@ -23,6 +25,34 @@ export interface StreetInput {
   endLat?: number | null;
   /** @nullable */
   endLng?: number | null;
+  /** @nullable */
+  lengthMeters?: number | null;
+  /** @nullable */
+  widthMeters?: number | null;
+  /** @nullable */
+  condition?: StreetInputCondition;
+  /** @nullable */
+  startIntersection?: string | null;
+  /** @nullable */
+  endIntersection?: string | null;
+  /** @nullable */
+  lanes?: number | null;
+  /** @nullable */
+  hasSidewalk?: boolean | null;
+  /** @nullable */
+  hasStreetLights?: boolean | null;
+  /** @nullable */
+  hasDrainage?: boolean | null;
+  /** @nullable */
+  lastResurfacedYear?: number | null;
+  /** @nullable */
+  lastPciScore?: number | null;
+  /** @nullable */
+  lastPciRating?: string | null;
+  /** @nullable */
+  nextInspectionDate?: string | null;
+  /** @nullable */
+  maintenancePriority?: StreetInputMaintenancePriority;
   /** @nullable */
   description?: string | null;
   status?: StreetInputStatus;

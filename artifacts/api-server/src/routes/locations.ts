@@ -37,6 +37,18 @@ function formatKebele(k: KebeleRow) {
   };
 }
 
+function calculateHaversineDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
 async function formatStreet(s: StreetRow) {
   let kebeleName: string | null = null;
   if (s.kebeleId) {
@@ -49,6 +61,20 @@ async function formatStreet(s: StreetRow) {
     streetType: s.streetType ?? null, roadSurface: s.roadSurface ?? null,
     startLat: s.startLat ?? null, startLng: s.startLng ?? null,
     endLat: s.endLat ?? null, endLng: s.endLng ?? null,
+    lengthMeters: s.lengthMeters ?? null,
+    widthMeters: s.widthMeters ?? null,
+    condition: s.condition ?? "good",
+    startIntersection: s.startIntersection ?? null,
+    endIntersection: s.endIntersection ?? null,
+    lanes: s.lanes ?? 2,
+    hasSidewalk: s.hasSidewalk ?? false,
+    hasStreetLights: s.hasStreetLights ?? false,
+    hasDrainage: s.hasDrainage ?? false,
+    lastResurfacedYear: s.lastResurfacedYear ?? null,
+    lastPciScore: s.lastPciScore ?? null,
+    lastPciRating: s.lastPciRating ?? null,
+    nextInspectionDate: s.nextInspectionDate ? s.nextInspectionDate.toISOString() : null,
+    maintenancePriority: s.maintenancePriority ?? "routine",
     description: s.description ?? null, status: s.status,
     createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(),
   };
@@ -199,7 +225,7 @@ router.delete("/kebeles/:id", requireAuth, requireRole("admin"), async (req, res
 
 // GET /streets — single JOIN query; no N+1, no in-memory filtering
 router.get("/streets", requireAuth, async (req, res): Promise<void> => {
-  const { kebele_id, status, search } = req.query as Record<string, string>;
+  const { kebele_id, status, condition, search } = req.query as Record<string, string>;
   const user = req.user!;
 
   const conditions: ReturnType<typeof eq>[] = [];
@@ -215,6 +241,10 @@ router.get("/streets", requireAuth, async (req, res): Promise<void> => {
       if (!isNaN(kid)) conditions.push(eq(streetsTable.kebeleId, kid) as ReturnType<typeof eq>);
     }
     if (status) conditions.push(eq(streetsTable.status, status) as ReturnType<typeof eq>);
+  }
+
+  if (condition) {
+    conditions.push(eq(streetsTable.condition, condition) as ReturnType<typeof eq>);
   }
 
   if (search) {
@@ -240,6 +270,15 @@ router.get("/streets", requireAuth, async (req, res): Promise<void> => {
       startLng: streetsTable.startLng,
       endLat: streetsTable.endLat,
       endLng: streetsTable.endLng,
+      lengthMeters: streetsTable.lengthMeters,
+      widthMeters: streetsTable.widthMeters,
+      condition: streetsTable.condition,
+      startIntersection: streetsTable.startIntersection,
+      endIntersection: streetsTable.endIntersection,
+      lanes: streetsTable.lanes,
+      hasSidewalk: streetsTable.hasSidewalk,
+      hasStreetLights: streetsTable.hasStreetLights,
+      hasDrainage: streetsTable.hasDrainage,
       description: streetsTable.description,
       status: streetsTable.status,
       createdAt: streetsTable.createdAt,
@@ -257,6 +296,15 @@ router.get("/streets", requireAuth, async (req, res): Promise<void> => {
       streetType: s.streetType ?? null, roadSurface: s.roadSurface ?? null,
       startLat: s.startLat ?? null, startLng: s.startLng ?? null,
       endLat: s.endLat ?? null, endLng: s.endLng ?? null,
+      lengthMeters: s.lengthMeters ?? null,
+      widthMeters: s.widthMeters ?? null,
+      condition: s.condition ?? "good",
+      startIntersection: s.startIntersection ?? null,
+      endIntersection: s.endIntersection ?? null,
+      lanes: s.lanes ?? 2,
+      hasSidewalk: s.hasSidewalk ?? false,
+      hasStreetLights: s.hasStreetLights ?? false,
+      hasDrainage: s.hasDrainage ?? false,
       description: s.description ?? null, status: s.status,
       createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(),
     })),
@@ -265,9 +313,16 @@ router.get("/streets", requireAuth, async (req, res): Promise<void> => {
 
 // POST /streets
 router.post("/streets", requireAuth, requireRole("admin", "city_officer"), async (req, res): Promise<void> => {
-  const { name, code, kebeleId, streetType, roadSurface, startLat, startLng, endLat, endLng, description, status } = req.body as {
+  const {
+    name, code, kebeleId, streetType, roadSurface, startLat, startLng, endLat, endLng,
+    lengthMeters, widthMeters, condition, startIntersection, endIntersection, lanes,
+    hasSidewalk, hasStreetLights, hasDrainage, description, status,
+  } = req.body as {
     name: string; code: string; kebeleId: number; streetType?: string; roadSurface?: string;
     startLat?: number | null; startLng?: number | null; endLat?: number | null; endLng?: number | null;
+    lengthMeters?: number | null; widthMeters?: number | null; condition?: string;
+    startIntersection?: string; endIntersection?: string; lanes?: number;
+    hasSidewalk?: boolean; hasStreetLights?: boolean; hasDrainage?: boolean;
     description?: string; status?: string;
   };
 
@@ -282,11 +337,25 @@ router.post("/streets", requireAuth, requireRole("admin", "city_officer"), async
     .where(and(eq(streetsTable.code, code.trim().toUpperCase()), eq(streetsTable.kebeleId, kebeleId)));
   if (dup) { res.status(409).json({ error: "Street code already exists within this kebele" }); return; }
 
+  let computedLength = lengthMeters != null ? Number(lengthMeters) : null;
+  if ((computedLength == null || isNaN(computedLength)) && startLat != null && startLng != null && endLat != null && endLng != null) {
+    computedLength = calculateHaversineDistanceMeters(Number(startLat), Number(startLng), Number(endLat), Number(endLng));
+  }
+
   const [created] = await db.insert(streetsTable).values({
     name: name.trim(), code: code.trim().toUpperCase(), kebeleId,
     streetType: streetType?.trim() || null, roadSurface: roadSurface?.trim() || null,
     startLat: startLat ?? null, startLng: startLng ?? null,
     endLat: endLat ?? null, endLng: endLng ?? null,
+    lengthMeters: computedLength != null && !isNaN(computedLength) ? computedLength : null,
+    widthMeters: widthMeters != null ? Number(widthMeters) : null,
+    condition: condition?.trim() || "good",
+    startIntersection: startIntersection?.trim() || null,
+    endIntersection: endIntersection?.trim() || null,
+    lanes: lanes != null ? Number(lanes) : 2,
+    hasSidewalk: Boolean(hasSidewalk),
+    hasStreetLights: Boolean(hasStreetLights),
+    hasDrainage: Boolean(hasDrainage),
     description: description?.trim() || null,
     status: status || "active",
   }).returning();
@@ -303,9 +372,16 @@ router.put("/streets/:id", requireAuth, requireRole("admin", "city_officer"), as
   const [existing] = await db.select().from(streetsTable).where(eq(streetsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Street not found" }); return; }
 
-  const { name, code, kebeleId, streetType, roadSurface, startLat, startLng, endLat, endLng, description, status } = req.body as {
+  const {
+    name, code, kebeleId, streetType, roadSurface, startLat, startLng, endLat, endLng,
+    lengthMeters, widthMeters, condition, startIntersection, endIntersection, lanes,
+    hasSidewalk, hasStreetLights, hasDrainage, description, status,
+  } = req.body as {
     name?: string; code?: string; kebeleId?: number; streetType?: string; roadSurface?: string;
     startLat?: number | null; startLng?: number | null; endLat?: number | null; endLng?: number | null;
+    lengthMeters?: number | null; widthMeters?: number | null; condition?: string;
+    startIntersection?: string; endIntersection?: string; lanes?: number;
+    hasSidewalk?: boolean; hasStreetLights?: boolean; hasDrainage?: boolean;
     description?: string; status?: string;
   };
 
@@ -318,14 +394,33 @@ router.put("/streets/:id", requireAuth, requireRole("admin", "city_officer"), as
     if (dup) { res.status(409).json({ error: "Street code already exists within this kebele" }); return; }
   }
 
+  const effectiveStartLat = startLat !== undefined ? startLat : existing.startLat;
+  const effectiveStartLng = startLng !== undefined ? startLng : existing.startLng;
+  const effectiveEndLat = endLat !== undefined ? endLat : existing.endLat;
+  const effectiveEndLng = endLng !== undefined ? endLng : existing.endLng;
+
+  let computedLength: number | null = lengthMeters !== undefined ? (lengthMeters != null ? Number(lengthMeters) : null) : existing.lengthMeters;
+  if ((computedLength == null || isNaN(computedLength)) && effectiveStartLat != null && effectiveStartLng != null && effectiveEndLat != null && effectiveEndLng != null) {
+    computedLength = calculateHaversineDistanceMeters(Number(effectiveStartLat), Number(effectiveStartLng), Number(effectiveEndLat), Number(effectiveEndLng));
+  }
+
   const [updated] = await db.update(streetsTable).set({
     name: name?.trim() || existing.name, code: newCode, kebeleId: newKebeleId,
     streetType: streetType !== undefined ? streetType?.trim() || null : existing.streetType,
     roadSurface: roadSurface !== undefined ? roadSurface?.trim() || null : existing.roadSurface,
-    startLat: startLat !== undefined ? startLat : existing.startLat,
-    startLng: startLng !== undefined ? startLng : existing.startLng,
-    endLat: endLat !== undefined ? endLat : existing.endLat,
-    endLng: endLng !== undefined ? endLng : existing.endLng,
+    startLat: effectiveStartLat,
+    startLng: effectiveStartLng,
+    endLat: effectiveEndLat,
+    endLng: effectiveEndLng,
+    lengthMeters: computedLength != null && !isNaN(computedLength) ? computedLength : null,
+    widthMeters: widthMeters !== undefined ? (widthMeters != null ? Number(widthMeters) : null) : existing.widthMeters,
+    condition: condition !== undefined ? condition?.trim() || "good" : existing.condition,
+    startIntersection: startIntersection !== undefined ? startIntersection?.trim() || null : existing.startIntersection,
+    endIntersection: endIntersection !== undefined ? endIntersection?.trim() || null : existing.endIntersection,
+    lanes: lanes !== undefined ? (lanes != null ? Number(lanes) : 2) : existing.lanes,
+    hasSidewalk: hasSidewalk !== undefined ? Boolean(hasSidewalk) : existing.hasSidewalk,
+    hasStreetLights: hasStreetLights !== undefined ? Boolean(hasStreetLights) : existing.hasStreetLights,
+    hasDrainage: hasDrainage !== undefined ? Boolean(hasDrainage) : existing.hasDrainage,
     description: description !== undefined ? description?.trim() || null : existing.description,
     status: status || existing.status,
   }).where(eq(streetsTable.id, id)).returning();

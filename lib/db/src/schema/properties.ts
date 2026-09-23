@@ -2,6 +2,8 @@ import { pgTable, serial, text, integer, real, timestamp, index } from "drizzle-
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
+import { landParcelsTable } from "./land_parcels";
+import { buildingsTable } from "./buildings";
 
 export const propertiesTable = pgTable(
   "properties",
@@ -9,6 +11,9 @@ export const propertiesTable = pgTable(
     id: serial("id").primaryKey(),
     addressCode: text("address_code"),
     houseNumber: text("house_number"),
+    unitNumber: text("unit_number"), // e.g. Shop 101, Apt 2B, Suite 4
+    buildingId: integer("building_id").references(() => buildingsTable.id),
+    parcelId: integer("parcel_id").references(() => landParcelsTable.id),
     buildingName: text("building_name"),
     propertyType: text("property_type").notNull().default("residential"),
     ownershipType: text("ownership_type"),

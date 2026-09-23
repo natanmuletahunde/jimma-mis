@@ -9,5 +9,6 @@
 export type ListStreetsParams = {
 kebele_id?: number;
 status?: string;
+condition?: string;
 search?: string;
 };

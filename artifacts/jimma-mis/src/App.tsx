@@ -20,6 +20,9 @@ import Users from "@/pages/users";
 import LocationsSetup from "@/pages/setup/locations";
 import StreetsSetup from "@/pages/setup/streets";
 import BlocksSetup from "@/pages/setup/blocks";
+import RoadInventorySetup from "@/pages/setup/road-inventory";
+import LandParcelsPage from "@/pages/cadastre/parcels";
+import BuildingsRegistryPage from "@/pages/cadastre/buildings";
 import AuditLogs from "@/pages/audit-logs";
 
 import FieldCollection from "@/pages/mobile/field-collection";
@@ -49,12 +52,15 @@ function ProtectedRoutes() {
       <Route path="/properties" component={PropertiesList} />
       <Route path="/properties/new" component={PropertyNew} />
       <Route path="/properties/:id" component={PropertyShow} />
+      <Route path="/cadastre/parcels" component={LandParcelsPage} />
+      <Route path="/cadastre/buildings" component={BuildingsRegistryPage} />
       <Route path="/map" component={MapView} />
       <Route path="/reports" component={Reports} />
       <Route path="/users" component={Users} />
       <Route path="/setup/locations" component={LocationsSetup} />
       <Route path="/setup/streets" component={StreetsSetup} />
       <Route path="/setup/blocks" component={BlocksSetup} />
+      <Route path="/setup/road-inventory" component={RoadInventorySetup} />
       <Route path="/audit-logs" component={AuditLogs} />
       <Route path="/">
         <Redirect to="/dashboard" />

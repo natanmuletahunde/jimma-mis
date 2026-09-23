@@ -8,7 +8,8 @@ export function getClientIp(req: Request): string {
 }
 
 export function getDeviceInfo(req: Request): string {
-  return (req.headers["user-agent"] ?? "unknown").slice(0, 512);
+  const ua = req.headers["user-agent"];
+  return typeof ua === "string" ? ua.slice(0, 255) : "unknown";
 }
 
 export interface AuditEntry {

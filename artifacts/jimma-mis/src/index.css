@@ -193,3 +193,26 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-address-plate,
+  #printable-address-plate * {
+    visibility: visible !important;
+  }
+  #printable-address-plate {
+    position: fixed !important;
+    left: 50% !important;
+    top: 35% !important;
+    transform: translate(-50%, -50%) scale(1.15) !important;
+    box-shadow: none !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}

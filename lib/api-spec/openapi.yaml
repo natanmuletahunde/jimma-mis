@@ -791,6 +791,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: condition
+          in: query
+          schema:
+            type: string
         - name: search
           in: query
           schema:
@@ -867,6 +871,127 @@ paths:
           description: Cannot delete — in use by properties
         "404":
           description: Street not found
+
+  /streets/{id}/maintenance:
+    get:
+      operationId: getStreetMaintenanceHistory
+      tags: [road-inventory]
+      summary: Get maintenance history and inspection logs for a specific street
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Maintenance history of the street
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoadMaintenanceRecord"
+
+  /road-inventory/summary:
+    get:
+      operationId: getRoadInventorySummary
+      tags: [road-inventory]
+      summary: Get city-wide road network and pavement condition summary
+      responses:
+        "200":
+          description: Road inventory summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoadInventorySummary"
+
+  /road-inventory/records:
+    get:
+      operationId: listRoadMaintenanceRecords
+      tags: [road-inventory]
+      summary: List road maintenance and inspection records
+      parameters:
+        - name: streetId
+          in: query
+          schema:
+            type: integer
+        - name: activityType
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of maintenance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoadMaintenanceRecord"
+    post:
+      operationId: createRoadMaintenanceRecord
+      tags: [road-inventory]
+      summary: Log a new maintenance activity or PCI inspection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoadMaintenanceRecordInput"
+      responses:
+        "201":
+          description: Created maintenance record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoadMaintenanceRecord"
+
+  /road-inventory/records/{id}:
+    put:
+      operationId: updateRoadMaintenanceRecord
+      tags: [road-inventory]
+      summary: Update a maintenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoadMaintenanceRecordInput"
+      responses:
+        "200":
+          description: Updated maintenance record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoadMaintenanceRecord"
+        "404":
+          description: Record not found
+    delete:
+      operationId: deleteRoadMaintenanceRecord
+      tags: [road-inventory]
+      summary: Delete a maintenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted successfully
+        "404":
+          description: Record not found
 
   /blocks:
     get:
@@ -1643,6 +1768,36 @@ components:
           type: ["number", "null"]
         endLng:
           type: ["number", "null"]
+        lengthMeters:
+          type: ["number", "null"]
+        widthMeters:
+          type: ["number", "null"]
+        condition:
+          type: ["string", "null"]
+          enum: [good, fair, poor, under_maintenance]
+        startIntersection:
+          type: ["string", "null"]
+        endIntersection:
+          type: ["string", "null"]
+        lanes:
+          type: ["integer", "null"]
+        hasSidewalk:
+          type: ["boolean", "null"]
+        hasStreetLights:
+          type: ["boolean", "null"]
+        hasDrainage:
+          type: ["boolean", "null"]
+        lastResurfacedYear:
+          type: ["integer", "null"]
+        lastPciScore:
+          type: ["integer", "null"]
+        lastPciRating:
+          type: ["string", "null"]
+        nextInspectionDate:
+          type: ["string", "null"]
+        maintenancePriority:
+          type: ["string", "null"]
+          enum: [routine, medium, high, critical]
         description:
           type: ["string", "null"]
         status:
@@ -1675,6 +1830,36 @@ components:
           type: ["number", "null"]
         endLng:
           type: ["number", "null"]
+        lengthMeters:
+          type: ["number", "null"]
+        widthMeters:
+          type: ["number", "null"]
+        condition:
+          type: ["string", "null"]
+          enum: [good, fair, poor, under_maintenance]
+        startIntersection:
+          type: ["string", "null"]
+        endIntersection:
+          type: ["string", "null"]
+        lanes:
+          type: ["integer", "null"]
+        hasSidewalk:
+          type: ["boolean", "null"]
+        hasStreetLights:
+          type: ["boolean", "null"]
+        hasDrainage:
+          type: ["boolean", "null"]
+        lastResurfacedYear:
+          type: ["integer", "null"]
+        lastPciScore:
+          type: ["integer", "null"]
+        lastPciRating:
+          type: ["string", "null"]
+        nextInspectionDate:
+          type: ["string", "null"]
+        maintenancePriority:
+          type: ["string", "null"]
+          enum: [routine, medium, high, critical]
         description:
           type: ["string", "null"]
         status:
@@ -1800,3 +1985,119 @@ components:
           type: string
         details:
           type: string
+
+    RoadInventorySummary:
+      type: object
+      required: [totalStreets, totalKilometers, averagePci, needsRepavingCount, upcomingInspectionsCount, totalMaintenanceSpentEtb, pciTiers]
+      properties:
+        totalStreets:
+          type: integer
+        totalKilometers:
+          type: number
+        averagePci:
+          type: number
+        needsRepavingCount:
+          type: integer
+        upcomingInspectionsCount:
+          type: integer
+        totalMaintenanceSpentEtb:
+          type: number
+        pciTiers:
+          type: object
+          properties:
+            good:
+              type: integer
+            satisfactory:
+              type: integer
+            fair:
+              type: integer
+            poor:
+              type: integer
+            very_poor:
+              type: integer
+            serious:
+              type: integer
+            failed:
+              type: integer
+
+    RoadMaintenanceRecord:
+      type: object
+      required: [id, streetId, activityType, performedDate, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        streetId:
+          type: integer
+        streetName:
+          type: ["string", "null"]
+        streetCode:
+          type: ["string", "null"]
+        kebeleName:
+          type: ["string", "null"]
+        activityType:
+          type: string
+          enum: [inspection, resurfacing, pothole_patching, drainage_clearing, lighting_repair, expansion, emergency_repair]
+        pciScore:
+          type: ["integer", "null"]
+        pciRating:
+          type: ["string", "null"]
+          enum: [good, satisfactory, fair, poor, very_poor, serious, failed]
+        distressTypes:
+          type: ["string", "null"]
+        performedDate:
+          type: string
+        contractor:
+          type: ["string", "null"]
+        costEtb:
+          type: ["number", "null"]
+        fundingSource:
+          type: ["string", "null"]
+          enum: [municipal_budget, regional_grant, federal_grant, community_fund]
+        nextInspectionDue:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [completed, in_progress, scheduled, deferred]
+        inspectorName:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    RoadMaintenanceRecordInput:
+      type: object
+      required: [streetId, activityType, performedDate]
+      properties:
+        streetId:
+          type: integer
+        activityType:
+          type: string
+          enum: [inspection, resurfacing, pothole_patching, drainage_clearing, lighting_repair, expansion, emergency_repair]
+        pciScore:
+          type: ["integer", "null"]
+        pciRating:
+          type: ["string", "null"]
+          enum: [good, satisfactory, fair, poor, very_poor, serious, failed]
+        distressTypes:
+          type: ["string", "null"]
+        performedDate:
+          type: string
+        contractor:
+          type: ["string", "null"]
+        costEtb:
+          type: ["number", "null"]
+        fundingSource:
+          type: ["string", "null"]
+          enum: [municipal_budget, regional_grant, federal_grant, community_fund]
+        nextInspectionDue:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [completed, in_progress, scheduled, deferred]
+        inspectorName:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]

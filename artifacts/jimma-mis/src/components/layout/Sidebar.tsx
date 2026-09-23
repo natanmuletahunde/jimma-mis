@@ -15,6 +15,9 @@ import {
   ChevronRight,
   ShieldCheck,
   Smartphone,
+  Wrench,
+  LandPlot,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +27,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [setupOpen, setSetupOpen] = useState(location.startsWith("/setup"));
+  const [cadastreOpen, setCadastreOpen] = useState(location.startsWith("/cadastre"));
 
   const isSetupRole = user?.role === "admin" || user?.role === "city_officer" || user?.role === "kebele_officer" || user?.role === "viewer";
 
@@ -34,10 +38,16 @@ export function Sidebar() {
     { href: "/reports", label: "Reports", icon: FileText },
   ];
 
+  const cadastreNav = [
+    { href: "/cadastre/parcels", label: "Land Parcels", icon: LandPlot },
+    { href: "/cadastre/buildings", label: "Buildings", icon: Building },
+  ];
+
   const setupNav = [
     { href: "/setup/locations", label: "Kebeles", icon: MapPin },
     { href: "/setup/streets", label: "Streets", icon: Navigation },
     { href: "/setup/blocks", label: "Blocks", icon: Grid3x3 },
+    { href: "/setup/road-inventory", label: "Road Inventory", icon: Wrench },
   ];
 
   function NavLink({ href, label, icon: Icon, indent = false }: { href: string; label: string; icon: React.ElementType; indent?: boolean }) {
@@ -84,6 +94,24 @@ export function Sidebar() {
 
         {isSetupRole && (
           <div className="mt-2">
+            <button
+              onClick={() => setCadastreOpen((v) => !v)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+            >
+              <LandPlot className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="flex-1 text-left">Cadastre (LADM)</span>
+              {cadastreOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </button>
+            {cadastreOpen && (
+              <div className="mt-0.5 flex flex-col gap-0.5">
+                {cadastreNav.map((item) => <NavLink key={item.href} {...item} indent />)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isSetupRole && (
+          <div className="mt-1">
             <button
               onClick={() => setSetupOpen((v) => !v)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sm font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"

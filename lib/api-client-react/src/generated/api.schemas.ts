@@ -447,6 +447,32 @@ export interface KebeleInput {
   status?: KebeleInputStatus;
 }
 
+/**
+ * @nullable
+ */
+export type StreetCondition = typeof StreetCondition[keyof typeof StreetCondition] | null;
+
+
+export const StreetCondition = {
+  good: 'good',
+  fair: 'fair',
+  poor: 'poor',
+  under_maintenance: 'under_maintenance',
+} as const;
+
+/**
+ * @nullable
+ */
+export type StreetMaintenancePriority = typeof StreetMaintenancePriority[keyof typeof StreetMaintenancePriority] | null;
+
+
+export const StreetMaintenancePriority = {
+  routine: 'routine',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
 export type StreetStatus = typeof StreetStatus[keyof typeof StreetStatus];
 
 
@@ -475,11 +501,65 @@ export interface Street {
   /** @nullable */
   endLng?: number | null;
   /** @nullable */
+  lengthMeters?: number | null;
+  /** @nullable */
+  widthMeters?: number | null;
+  /** @nullable */
+  condition?: StreetCondition;
+  /** @nullable */
+  startIntersection?: string | null;
+  /** @nullable */
+  endIntersection?: string | null;
+  /** @nullable */
+  lanes?: number | null;
+  /** @nullable */
+  hasSidewalk?: boolean | null;
+  /** @nullable */
+  hasStreetLights?: boolean | null;
+  /** @nullable */
+  hasDrainage?: boolean | null;
+  /** @nullable */
+  lastResurfacedYear?: number | null;
+  /** @nullable */
+  lastPciScore?: number | null;
+  /** @nullable */
+  lastPciRating?: string | null;
+  /** @nullable */
+  nextInspectionDate?: string | null;
+  /** @nullable */
+  maintenancePriority?: StreetMaintenancePriority;
+  /** @nullable */
   description?: string | null;
   status: StreetStatus;
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * @nullable
+ */
+export type StreetInputCondition = typeof StreetInputCondition[keyof typeof StreetInputCondition] | null;
+
+
+export const StreetInputCondition = {
+  good: 'good',
+  fair: 'fair',
+  poor: 'poor',
+  under_maintenance: 'under_maintenance',
+} as const;
+
+/**
+ * @nullable
+ */
+export type StreetInputMaintenancePriority = typeof StreetInputMaintenancePriority[keyof typeof StreetInputMaintenancePriority] | null;
+
+
+export const StreetInputMaintenancePriority = {
+  routine: 'routine',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
 
 export type StreetInputStatus = typeof StreetInputStatus[keyof typeof StreetInputStatus];
 
@@ -505,6 +585,34 @@ export interface StreetInput {
   endLat?: number | null;
   /** @nullable */
   endLng?: number | null;
+  /** @nullable */
+  lengthMeters?: number | null;
+  /** @nullable */
+  widthMeters?: number | null;
+  /** @nullable */
+  condition?: StreetInputCondition;
+  /** @nullable */
+  startIntersection?: string | null;
+  /** @nullable */
+  endIntersection?: string | null;
+  /** @nullable */
+  lanes?: number | null;
+  /** @nullable */
+  hasSidewalk?: boolean | null;
+  /** @nullable */
+  hasStreetLights?: boolean | null;
+  /** @nullable */
+  hasDrainage?: boolean | null;
+  /** @nullable */
+  lastResurfacedYear?: number | null;
+  /** @nullable */
+  lastPciScore?: number | null;
+  /** @nullable */
+  lastPciRating?: string | null;
+  /** @nullable */
+  nextInspectionDate?: string | null;
+  /** @nullable */
+  maintenancePriority?: StreetInputMaintenancePriority;
   /** @nullable */
   description?: string | null;
   status?: StreetInputStatus;
@@ -603,6 +711,189 @@ export interface TrackAuditEventInput {
   details?: string;
 }
 
+export type RoadInventorySummaryPciTiers = {
+  good?: number;
+  satisfactory?: number;
+  fair?: number;
+  poor?: number;
+  very_poor?: number;
+  serious?: number;
+  failed?: number;
+};
+
+export interface RoadInventorySummary {
+  totalStreets: number;
+  totalKilometers: number;
+  averagePci: number;
+  needsRepavingCount: number;
+  upcomingInspectionsCount: number;
+  totalMaintenanceSpentEtb: number;
+  pciTiers: RoadInventorySummaryPciTiers;
+}
+
+export type RoadMaintenanceRecordActivityType = typeof RoadMaintenanceRecordActivityType[keyof typeof RoadMaintenanceRecordActivityType];
+
+
+export const RoadMaintenanceRecordActivityType = {
+  inspection: 'inspection',
+  resurfacing: 'resurfacing',
+  pothole_patching: 'pothole_patching',
+  drainage_clearing: 'drainage_clearing',
+  lighting_repair: 'lighting_repair',
+  expansion: 'expansion',
+  emergency_repair: 'emergency_repair',
+} as const;
+
+/**
+ * @nullable
+ */
+export type RoadMaintenanceRecordPciRating = typeof RoadMaintenanceRecordPciRating[keyof typeof RoadMaintenanceRecordPciRating] | null;
+
+
+export const RoadMaintenanceRecordPciRating = {
+  good: 'good',
+  satisfactory: 'satisfactory',
+  fair: 'fair',
+  poor: 'poor',
+  very_poor: 'very_poor',
+  serious: 'serious',
+  failed: 'failed',
+} as const;
+
+/**
+ * @nullable
+ */
+export type RoadMaintenanceRecordFundingSource = typeof RoadMaintenanceRecordFundingSource[keyof typeof RoadMaintenanceRecordFundingSource] | null;
+
+
+export const RoadMaintenanceRecordFundingSource = {
+  municipal_budget: 'municipal_budget',
+  regional_grant: 'regional_grant',
+  federal_grant: 'federal_grant',
+  community_fund: 'community_fund',
+} as const;
+
+export type RoadMaintenanceRecordStatus = typeof RoadMaintenanceRecordStatus[keyof typeof RoadMaintenanceRecordStatus];
+
+
+export const RoadMaintenanceRecordStatus = {
+  completed: 'completed',
+  in_progress: 'in_progress',
+  scheduled: 'scheduled',
+  deferred: 'deferred',
+} as const;
+
+export interface RoadMaintenanceRecord {
+  id: number;
+  streetId: number;
+  /** @nullable */
+  streetName?: string | null;
+  /** @nullable */
+  streetCode?: string | null;
+  /** @nullable */
+  kebeleName?: string | null;
+  activityType: RoadMaintenanceRecordActivityType;
+  /** @nullable */
+  pciScore?: number | null;
+  /** @nullable */
+  pciRating?: RoadMaintenanceRecordPciRating;
+  /** @nullable */
+  distressTypes?: string | null;
+  performedDate: string;
+  /** @nullable */
+  contractor?: string | null;
+  /** @nullable */
+  costEtb?: number | null;
+  /** @nullable */
+  fundingSource?: RoadMaintenanceRecordFundingSource;
+  /** @nullable */
+  nextInspectionDue?: string | null;
+  status: RoadMaintenanceRecordStatus;
+  /** @nullable */
+  inspectorName?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RoadMaintenanceRecordInputActivityType = typeof RoadMaintenanceRecordInputActivityType[keyof typeof RoadMaintenanceRecordInputActivityType];
+
+
+export const RoadMaintenanceRecordInputActivityType = {
+  inspection: 'inspection',
+  resurfacing: 'resurfacing',
+  pothole_patching: 'pothole_patching',
+  drainage_clearing: 'drainage_clearing',
+  lighting_repair: 'lighting_repair',
+  expansion: 'expansion',
+  emergency_repair: 'emergency_repair',
+} as const;
+
+/**
+ * @nullable
+ */
+export type RoadMaintenanceRecordInputPciRating = typeof RoadMaintenanceRecordInputPciRating[keyof typeof RoadMaintenanceRecordInputPciRating] | null;
+
+
+export const RoadMaintenanceRecordInputPciRating = {
+  good: 'good',
+  satisfactory: 'satisfactory',
+  fair: 'fair',
+  poor: 'poor',
+  very_poor: 'very_poor',
+  serious: 'serious',
+  failed: 'failed',
+} as const;
+
+/**
+ * @nullable
+ */
+export type RoadMaintenanceRecordInputFundingSource = typeof RoadMaintenanceRecordInputFundingSource[keyof typeof RoadMaintenanceRecordInputFundingSource] | null;
+
+
+export const RoadMaintenanceRecordInputFundingSource = {
+  municipal_budget: 'municipal_budget',
+  regional_grant: 'regional_grant',
+  federal_grant: 'federal_grant',
+  community_fund: 'community_fund',
+} as const;
+
+export type RoadMaintenanceRecordInputStatus = typeof RoadMaintenanceRecordInputStatus[keyof typeof RoadMaintenanceRecordInputStatus];
+
+
+export const RoadMaintenanceRecordInputStatus = {
+  completed: 'completed',
+  in_progress: 'in_progress',
+  scheduled: 'scheduled',
+  deferred: 'deferred',
+} as const;
+
+export interface RoadMaintenanceRecordInput {
+  streetId: number;
+  activityType: RoadMaintenanceRecordInputActivityType;
+  /** @nullable */
+  pciScore?: number | null;
+  /** @nullable */
+  pciRating?: RoadMaintenanceRecordInputPciRating;
+  /** @nullable */
+  distressTypes?: string | null;
+  performedDate: string;
+  /** @nullable */
+  contractor?: string | null;
+  /** @nullable */
+  costEtb?: number | null;
+  /** @nullable */
+  fundingSource?: RoadMaintenanceRecordInputFundingSource;
+  /** @nullable */
+  nextInspectionDue?: string | null;
+  status?: RoadMaintenanceRecordInputStatus;
+  /** @nullable */
+  inspectorName?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
 export type ListUsersParams = {
 role?: string;
 search?: string;
@@ -669,7 +960,14 @@ search?: string;
 export type ListStreetsParams = {
 kebele_id?: number;
 status?: string;
+condition?: string;
 search?: string;
+};
+
+export type ListRoadMaintenanceRecordsParams = {
+streetId?: number;
+activityType?: string;
+status?: string;
 };
 
 export type ListBlocksParams = {

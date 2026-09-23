@@ -3,6 +3,7 @@ import { useLocation, useSearch } from "wouter";
 import {
   useGetMapProperties,
   useGetMapSummary,
+  useListStreets,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +27,27 @@ import {
   Search,
   ExternalLink,
   Map as MapIcon,
+  Layers,
+  Route,
 } from "lucide-react";
 // @ts-ignore
 import L from "leaflet";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// ── Surface styles & colors for street vector polylines ─────────────────────
+export const SURFACE_STYLES: Record<string, { color: string; label: string; dashArray?: string; weight: number }> = {
+  asphalt:     { color: "#0f172a", label: "Asphalt", weight: 5 },
+  cobblestone: { color: "#b45309", label: "Cobblestone", weight: 4.5 },
+  gravel:      { color: "#ca8a04", label: "Gravel", dashArray: "6, 6", weight: 3.5 },
+  dirt:        { color: "#78350f", label: "Dirt / Earth", dashArray: "3, 6", weight: 3 },
+  earth:       { color: "#78350f", label: "Earth", dashArray: "3, 6", weight: 3 },
+};
+
+function getSurfaceStyle(surface?: string | null) {
+  const key = (surface || "asphalt").toLowerCase();
+  return SURFACE_STYLES[key] ?? { color: "#475569", label: surface || "Other", weight: 4 };
+}
 
 // ── Marker colors by property type ──────────────────────────────────────────
 const TYPE_COLORS: Record<string, string> = {
@@ -121,6 +138,22 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
+function LegendLine({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span
+        className="inline-block w-5 h-1 rounded"
+        style={{
+          backgroundColor: dashed ? "transparent" : color,
+          borderTop: dashed ? `2px dashed ${color}` : undefined,
+          height: dashed ? "0px" : "3px",
+        }}
+      />
+      {label}
+    </span>
+  );
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function MapView() {
   const [, navigate] = useLocation();
@@ -135,6 +168,7 @@ export default function MapView() {
   const mapRef         = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef     = useRef<L.LayerGroup | null>(null);
+  const streetsLayerRef = useRef<L.LayerGroup | null>(null);
   // Track every marker by property ID so we can programmatically open one
   const markerMapRef   = useRef<Record<number, L.Marker>>({});
   // Only fly-to once per deep-link visit
@@ -145,6 +179,10 @@ export default function MapView() {
   const [status, setStatus]               = useState("all");
   const [propertyType, setPropertyType]   = useState("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [showStreets, setShowStreets]         = useState(true);
+  const [showProperties, setShowProperties]   = useState(true);
+  const [streetSurfaceFilter, setStreetSurfaceFilter] = useState("all");
 
   // Debounce search
   useEffect(() => {
@@ -161,6 +199,8 @@ export default function MapView() {
 
   const { data: properties, isLoading } = useGetMapProperties(params);
   const { data: summary }               = useGetMapSummary();
+  const { data: streetsData }           = useListStreets({ limit: 100 });
+  const streets = streetsData?.streets ?? [];
 
   // Expose navigate for Leaflet popup inline onclick handlers
   useEffect(() => {
@@ -182,7 +222,10 @@ export default function MapView() {
       attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 19,
     }).addTo(map);
+
+    streetsLayerRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
+
     mapInstanceRef.current = map;
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);
@@ -190,6 +233,7 @@ export default function MapView() {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
       markersRef.current = null;
+      streetsLayerRef.current = null;
     };
   }, []);
 
@@ -198,6 +242,8 @@ export default function MapView() {
     if (!mapInstanceRef.current || !markersRef.current || !properties) return;
     markersRef.current.clearLayers();
     markerMapRef.current = {};
+
+    if (!showProperties) return;
 
     properties.forEach((prop) => {
       if (prop.latitude == null || prop.longitude == null) return;
@@ -256,17 +302,118 @@ export default function MapView() {
     // Deep-link: fly to targeted property and open its popup (only once)
     if (targetId && targetLat && targetLng && !didFlyRef.current) {
       didFlyRef.current = true;
-      // Capture the marker now — don't read markerMapRef inside the timeout
-      // (the ref's .current may be replaced by a subsequent render before it fires)
       const targetMarker = markerMapRef.current[targetId] ?? null;
       mapInstanceRef.current.flyTo([targetLat, targetLng], 18, {
         animate: true,
         duration: 1.2,
       });
-      // Open popup after the fly animation settles
       setTimeout(() => targetMarker?.openPopup(), 1400);
     }
-  }, [properties, targetId, targetLat, targetLng]);
+  }, [properties, targetId, targetLat, targetLng, showProperties]);
+
+  // Render Street Vector Polylines
+  useEffect(() => {
+    if (!mapInstanceRef.current || !streetsLayerRef.current) return;
+    streetsLayerRef.current.clearLayers();
+
+    if (!showStreets || !streets || streets.length === 0) return;
+
+    streets.forEach((street) => {
+      if (
+        street.startLat == null ||
+        street.startLng == null ||
+        street.endLat == null ||
+        street.endLng == null
+      ) {
+        return;
+      }
+
+      // Check if coordinates are in realistic geographic range (Jimma is ~7.6, 36.8)
+      if (Math.abs(street.startLat) > 90 || Math.abs(street.endLat) > 90) return;
+
+      const surfaceKey = (street.roadSurface || "asphalt").toLowerCase();
+      if (streetSurfaceFilter !== "all" && surfaceKey !== streetSurfaceFilter.toLowerCase()) {
+        return;
+      }
+
+      const style = getSurfaceStyle(street.roadSurface);
+
+      const polyline = L.polyline(
+        [
+          [street.startLat, street.startLng],
+          [street.endLat, street.endLng],
+        ],
+        {
+          color: style.color,
+          weight: style.weight,
+          dashArray: style.dashArray,
+          opacity: 0.88,
+        }
+      );
+
+      // Interactive hover styling
+      polyline.on("mouseover", function (this: L.Polyline) {
+        this.setStyle({ weight: style.weight + 2.5, opacity: 1 });
+      });
+      polyline.on("mouseout", function (this: L.Polyline) {
+        this.setStyle({ weight: style.weight, opacity: 0.88 });
+      });
+
+      const lengthFormatted = street.lengthMeters
+        ? street.lengthMeters >= 1000
+          ? `${(street.lengthMeters / 1000).toFixed(2)} km`
+          : `${Math.round(street.lengthMeters)} m`
+        : "—";
+
+      const conditionColor =
+        street.condition === "good" ? "#16a34a" : street.condition === "fair" ? "#ca8a04" : "#dc2626";
+
+      polyline.bindPopup(
+        `<div style="min-width:230px;max-width:290px;font-family:system-ui,sans-serif;font-size:12px;">
+          <div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:2px;">
+            ${street.name}
+          </div>
+          <div style="font-family:monospace;font-size:11px;color:#047857;font-weight:700;margin-bottom:6px;">
+            Code: ${street.code} • ${street.kebeleName ?? "Jimma"}
+          </div>
+          <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">
+            <span style="background:${style.color};color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;text-transform:capitalize;">
+              ${style.label}
+            </span>
+            <span style="background:${conditionColor};color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;text-transform:capitalize;">
+              ${street.condition ?? "Good"}
+            </span>
+            ${
+              street.lastPciScore
+                ? `<span style="background:#065f46;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">PCI ${street.lastPciScore}</span>`
+                : ""
+            }
+          </div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+            <tr><td style="color:#64748b;padding:2px 0;">Length</td><td style="font-weight:600;text-align:right;">${lengthFormatted}</td></tr>
+            <tr><td style="color:#64748b;padding:2px 0;">Width / Lanes</td><td style="font-weight:600;text-align:right;">${street.widthMeters ? `${street.widthMeters}m` : "—"} • ${street.lanes ?? 2} lanes</td></tr>
+            <tr><td style="color:#64748b;padding:2px 0;">Corridor Type</td><td style="font-weight:600;text-align:right;text-transform:capitalize;">${street.streetType ?? "Street"}</td></tr>
+            <tr>
+              <td style="color:#64748b;padding:2px 0;">Features</td>
+              <td style="text-align:right;font-size:13px;">
+                ${street.hasSidewalk ? "🚶 " : ""}${street.hasStreetLights ? "💡 " : ""}${street.hasDrainage ? "💧" : ""}
+                ${!street.hasSidewalk && !street.hasStreetLights && !street.hasDrainage ? "—" : ""}
+              </td>
+            </tr>
+          </table>
+          <button
+            onclick="window.__gisNavigate('/setup/road-inventory')"
+            style="width:100%;padding:6px 0;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;"
+          >
+            ↗ View Road Inventory & Maintenance
+          </button>
+        </div>`,
+        { maxWidth: 300 }
+      );
+
+      streetsLayerRef.current?.addLayer(polyline);
+    });
+  }, [streets, showStreets, streetSurfaceFilter]);
 
   // Revalidate map size on window resize
   useEffect(() => {
@@ -379,15 +526,78 @@ export default function MapView() {
         </CardContent>
       </Card>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 px-1">
-        <LegendDot color={TYPE_COLORS.residential} label="Residential" />
-        <LegendDot color={TYPE_COLORS.commercial}  label="Commercial" />
-        <LegendDot color={TYPE_COLORS.mixed}        label="Mixed Use" />
-        <LegendDot color={TYPE_COLORS.government}   label="Government" />
-        <LegendDot color={TYPE_COLORS.institution}  label="Institution" />
-        <LegendDot color="#6b7280"                  label="Other" />
-      </div>
+      {/* GIS Map Layer Controls & Legends */}
+      <Card className="bg-muted/30">
+        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mr-1">
+              <Layers className="w-3.5 h-3.5 text-primary" /> GIS Layers:
+            </span>
+
+            {/* Toggle Property Markers */}
+            <Button
+              type="button"
+              variant={showProperties ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowProperties(!showProperties)}
+              className="h-7 text-xs gap-1.5"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              Properties ({properties?.length ?? 0})
+            </Button>
+
+            {/* Toggle Street Corridors */}
+            <Button
+              type="button"
+              variant={showStreets ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowStreets(!showStreets)}
+              className="h-7 text-xs gap-1.5"
+            >
+              <Route className="w-3.5 h-3.5" />
+              Street Corridors ({streets?.length ?? 0})
+            </Button>
+
+            {/* Surface filter when streets enabled */}
+            {showStreets && (
+              <Select value={streetSurfaceFilter} onValueChange={setStreetSurfaceFilter}>
+                <SelectTrigger className="h-7 text-xs w-[140px] bg-background">
+                  <SelectValue placeholder="All Surfaces" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Surfaces</SelectItem>
+                  <SelectItem value="asphalt">Asphalt</SelectItem>
+                  <SelectItem value="cobblestone">Cobblestone</SelectItem>
+                  <SelectItem value="gravel">Gravel</SelectItem>
+                  <SelectItem value="dirt">Dirt / Earth</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+            {showProperties && (
+              <div className="flex items-center gap-2.5 border-r pr-3 border-border/60">
+                <span className="text-[11px] font-medium text-slate-500">Points:</span>
+                <LegendDot color={TYPE_COLORS.residential} label="Res" />
+                <LegendDot color={TYPE_COLORS.commercial}  label="Com" />
+                <LegendDot color={TYPE_COLORS.mixed}        label="Mix" />
+                <LegendDot color={TYPE_COLORS.government}   label="Gov" />
+                <LegendDot color={TYPE_COLORS.institution}  label="Inst" />
+              </div>
+            )}
+            {showStreets && (
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] font-medium text-slate-500">Corridors:</span>
+                <LegendLine color={SURFACE_STYLES.asphalt.color} label="Asphalt" />
+                <LegendLine color={SURFACE_STYLES.cobblestone.color} label="Cobblestone" />
+                <LegendLine color={SURFACE_STYLES.gravel.color} label="Gravel" dashed />
+                <LegendLine color={SURFACE_STYLES.dirt.color} label="Dirt" dashed />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Map */}
       <Card>

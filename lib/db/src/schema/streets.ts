@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { kebelesTable } from "./kebeles";
@@ -14,6 +14,20 @@ export const streetsTable = pgTable("streets", {
   startLng: real("start_lng"),
   endLat: real("end_lat"),
   endLng: real("end_lng"),
+  lengthMeters: real("length_meters"),
+  widthMeters: real("width_meters"),
+  condition: text("condition").notNull().default("good"),
+  startIntersection: text("start_intersection"),
+  endIntersection: text("end_intersection"),
+  lanes: integer("lanes").default(2),
+  hasSidewalk: boolean("has_sidewalk").default(false),
+  hasStreetLights: boolean("has_street_lights").default(false),
+  hasDrainage: boolean("has_drainage").default(false),
+  lastResurfacedYear: integer("last_resurfaced_year"),
+  lastPciScore: integer("last_pci_score"),
+  lastPciRating: text("last_pci_rating"),
+  nextInspectionDate: timestamp("next_inspection_date", { withTimezone: true }),
+  maintenancePriority: text("maintenance_priority").notNull().default("routine"),
   description: text("description"),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

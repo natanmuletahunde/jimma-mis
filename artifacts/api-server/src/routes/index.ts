@@ -9,6 +9,9 @@ import mapRouter from "./map";
 import reportsRouter from "./reports";
 import locationsRouter from "./locations";
 import auditLogsRouter from "./audit-logs";
+import roadInventoryRouter from "./road-inventory";
+import parcelsRouter from "./parcels";
+import buildingsRouter from "./buildings";
 
 const router: IRouter = Router();
 
@@ -22,5 +25,8 @@ router.use(mapRouter);
 router.use(reportsRouter);
 router.use(locationsRouter);
 router.use(auditLogsRouter);
+router.use(roadInventoryRouter);
+router.use("/parcels", parcelsRouter);
+router.use("/buildings", buildingsRouter);
 
 export default router;

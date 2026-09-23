@@ -6,3 +6,6 @@ export * from "./properties";
 export * from "./approvals";
 export * from "./property_photos";
 export * from "./audit_logs";
+export * from "./road_maintenance";
+export * from "./land_parcels";
+export * from "./buildings";

@@ -941,6 +941,7 @@ export const DeleteKebeleParams = zod.object({
 export const ListStreetsQueryParams = zod.object({
   "kebele_id": zod.coerce.number().optional(),
   "status": zod.coerce.string().optional(),
+  "condition": zod.coerce.string().optional(),
   "search": zod.coerce.string().optional()
 })
 
@@ -956,6 +957,20 @@ export const ListStreetsResponseItem = zod.object({
   "startLng": zod.number().nullish(),
   "endLat": zod.number().nullish(),
   "endLng": zod.number().nullish(),
+  "lengthMeters": zod.number().nullish(),
+  "widthMeters": zod.number().nullish(),
+  "condition": zod.enum(['good', 'fair', 'poor', 'under_maintenance']).nullish(),
+  "startIntersection": zod.string().nullish(),
+  "endIntersection": zod.string().nullish(),
+  "lanes": zod.number().nullish(),
+  "hasSidewalk": zod.boolean().nullish(),
+  "hasStreetLights": zod.boolean().nullish(),
+  "hasDrainage": zod.boolean().nullish(),
+  "lastResurfacedYear": zod.number().nullish(),
+  "lastPciScore": zod.number().nullish(),
+  "lastPciRating": zod.string().nullish(),
+  "nextInspectionDate": zod.string().nullish(),
+  "maintenancePriority": zod.enum(['routine', 'medium', 'high', 'critical']).nullish(),
   "description": zod.string().nullish(),
   "status": zod.enum(['active', 'inactive']),
   "createdAt": zod.string(),
@@ -977,6 +992,20 @@ export const CreateStreetBody = zod.object({
   "startLng": zod.number().nullish(),
   "endLat": zod.number().nullish(),
   "endLng": zod.number().nullish(),
+  "lengthMeters": zod.number().nullish(),
+  "widthMeters": zod.number().nullish(),
+  "condition": zod.enum(['good', 'fair', 'poor', 'under_maintenance']).nullish(),
+  "startIntersection": zod.string().nullish(),
+  "endIntersection": zod.string().nullish(),
+  "lanes": zod.number().nullish(),
+  "hasSidewalk": zod.boolean().nullish(),
+  "hasStreetLights": zod.boolean().nullish(),
+  "hasDrainage": zod.boolean().nullish(),
+  "lastResurfacedYear": zod.number().nullish(),
+  "lastPciScore": zod.number().nullish(),
+  "lastPciRating": zod.string().nullish(),
+  "nextInspectionDate": zod.string().nullish(),
+  "maintenancePriority": zod.enum(['routine', 'medium', 'high', 'critical']).nullish(),
   "description": zod.string().nullish(),
   "status": zod.enum(['active', 'inactive']).optional()
 })
@@ -999,6 +1028,20 @@ export const UpdateStreetBody = zod.object({
   "startLng": zod.number().nullish(),
   "endLat": zod.number().nullish(),
   "endLng": zod.number().nullish(),
+  "lengthMeters": zod.number().nullish(),
+  "widthMeters": zod.number().nullish(),
+  "condition": zod.enum(['good', 'fair', 'poor', 'under_maintenance']).nullish(),
+  "startIntersection": zod.string().nullish(),
+  "endIntersection": zod.string().nullish(),
+  "lanes": zod.number().nullish(),
+  "hasSidewalk": zod.boolean().nullish(),
+  "hasStreetLights": zod.boolean().nullish(),
+  "hasDrainage": zod.boolean().nullish(),
+  "lastResurfacedYear": zod.number().nullish(),
+  "lastPciScore": zod.number().nullish(),
+  "lastPciRating": zod.string().nullish(),
+  "nextInspectionDate": zod.string().nullish(),
+  "maintenancePriority": zod.enum(['routine', 'medium', 'high', 'critical']).nullish(),
   "description": zod.string().nullish(),
   "status": zod.enum(['active', 'inactive']).optional()
 })
@@ -1015,6 +1058,20 @@ export const UpdateStreetResponse = zod.object({
   "startLng": zod.number().nullish(),
   "endLat": zod.number().nullish(),
   "endLng": zod.number().nullish(),
+  "lengthMeters": zod.number().nullish(),
+  "widthMeters": zod.number().nullish(),
+  "condition": zod.enum(['good', 'fair', 'poor', 'under_maintenance']).nullish(),
+  "startIntersection": zod.string().nullish(),
+  "endIntersection": zod.string().nullish(),
+  "lanes": zod.number().nullish(),
+  "hasSidewalk": zod.boolean().nullish(),
+  "hasStreetLights": zod.boolean().nullish(),
+  "hasDrainage": zod.boolean().nullish(),
+  "lastResurfacedYear": zod.number().nullish(),
+  "lastPciScore": zod.number().nullish(),
+  "lastPciRating": zod.string().nullish(),
+  "nextInspectionDate": zod.string().nullish(),
+  "maintenancePriority": zod.enum(['routine', 'medium', 'high', 'critical']).nullish(),
   "description": zod.string().nullish(),
   "status": zod.enum(['active', 'inactive']),
   "createdAt": zod.string(),
@@ -1026,6 +1083,166 @@ export const UpdateStreetResponse = zod.object({
  * @summary Delete a street
  */
 export const DeleteStreetParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get maintenance history and inspection logs for a specific street
+ */
+export const GetStreetMaintenanceHistoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetStreetMaintenanceHistoryResponseItem = zod.object({
+  "id": zod.number(),
+  "streetId": zod.number(),
+  "streetName": zod.string().nullish(),
+  "streetCode": zod.string().nullish(),
+  "kebeleName": zod.string().nullish(),
+  "activityType": zod.enum(['inspection', 'resurfacing', 'pothole_patching', 'drainage_clearing', 'lighting_repair', 'expansion', 'emergency_repair']),
+  "pciScore": zod.number().nullish(),
+  "pciRating": zod.enum(['good', 'satisfactory', 'fair', 'poor', 'very_poor', 'serious', 'failed']).nullish(),
+  "distressTypes": zod.string().nullish(),
+  "performedDate": zod.string(),
+  "contractor": zod.string().nullish(),
+  "costEtb": zod.number().nullish(),
+  "fundingSource": zod.enum(['municipal_budget', 'regional_grant', 'federal_grant', 'community_fund']).nullish(),
+  "nextInspectionDue": zod.string().nullish(),
+  "status": zod.enum(['completed', 'in_progress', 'scheduled', 'deferred']),
+  "inspectorName": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const GetStreetMaintenanceHistoryResponse = zod.array(GetStreetMaintenanceHistoryResponseItem)
+
+
+/**
+ * @summary Get city-wide road network and pavement condition summary
+ */
+export const GetRoadInventorySummaryResponse = zod.object({
+  "totalStreets": zod.number(),
+  "totalKilometers": zod.number(),
+  "averagePci": zod.number(),
+  "needsRepavingCount": zod.number(),
+  "upcomingInspectionsCount": zod.number(),
+  "totalMaintenanceSpentEtb": zod.number(),
+  "pciTiers": zod.object({
+  "good": zod.number().optional(),
+  "satisfactory": zod.number().optional(),
+  "fair": zod.number().optional(),
+  "poor": zod.number().optional(),
+  "very_poor": zod.number().optional(),
+  "serious": zod.number().optional(),
+  "failed": zod.number().optional()
+})
+})
+
+
+/**
+ * @summary List road maintenance and inspection records
+ */
+export const ListRoadMaintenanceRecordsQueryParams = zod.object({
+  "streetId": zod.coerce.number().optional(),
+  "activityType": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional()
+})
+
+export const ListRoadMaintenanceRecordsResponseItem = zod.object({
+  "id": zod.number(),
+  "streetId": zod.number(),
+  "streetName": zod.string().nullish(),
+  "streetCode": zod.string().nullish(),
+  "kebeleName": zod.string().nullish(),
+  "activityType": zod.enum(['inspection', 'resurfacing', 'pothole_patching', 'drainage_clearing', 'lighting_repair', 'expansion', 'emergency_repair']),
+  "pciScore": zod.number().nullish(),
+  "pciRating": zod.enum(['good', 'satisfactory', 'fair', 'poor', 'very_poor', 'serious', 'failed']).nullish(),
+  "distressTypes": zod.string().nullish(),
+  "performedDate": zod.string(),
+  "contractor": zod.string().nullish(),
+  "costEtb": zod.number().nullish(),
+  "fundingSource": zod.enum(['municipal_budget', 'regional_grant', 'federal_grant', 'community_fund']).nullish(),
+  "nextInspectionDue": zod.string().nullish(),
+  "status": zod.enum(['completed', 'in_progress', 'scheduled', 'deferred']),
+  "inspectorName": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListRoadMaintenanceRecordsResponse = zod.array(ListRoadMaintenanceRecordsResponseItem)
+
+
+/**
+ * @summary Log a new maintenance activity or PCI inspection
+ */
+export const CreateRoadMaintenanceRecordBody = zod.object({
+  "streetId": zod.number(),
+  "activityType": zod.enum(['inspection', 'resurfacing', 'pothole_patching', 'drainage_clearing', 'lighting_repair', 'expansion', 'emergency_repair']),
+  "pciScore": zod.number().nullish(),
+  "pciRating": zod.enum(['good', 'satisfactory', 'fair', 'poor', 'very_poor', 'serious', 'failed']).nullish(),
+  "distressTypes": zod.string().nullish(),
+  "performedDate": zod.string(),
+  "contractor": zod.string().nullish(),
+  "costEtb": zod.number().nullish(),
+  "fundingSource": zod.enum(['municipal_budget', 'regional_grant', 'federal_grant', 'community_fund']).nullish(),
+  "nextInspectionDue": zod.string().nullish(),
+  "status": zod.enum(['completed', 'in_progress', 'scheduled', 'deferred']).optional(),
+  "inspectorName": zod.string().nullish(),
+  "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update a maintenance record
+ */
+export const UpdateRoadMaintenanceRecordParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateRoadMaintenanceRecordBody = zod.object({
+  "streetId": zod.number(),
+  "activityType": zod.enum(['inspection', 'resurfacing', 'pothole_patching', 'drainage_clearing', 'lighting_repair', 'expansion', 'emergency_repair']),
+  "pciScore": zod.number().nullish(),
+  "pciRating": zod.enum(['good', 'satisfactory', 'fair', 'poor', 'very_poor', 'serious', 'failed']).nullish(),
+  "distressTypes": zod.string().nullish(),
+  "performedDate": zod.string(),
+  "contractor": zod.string().nullish(),
+  "costEtb": zod.number().nullish(),
+  "fundingSource": zod.enum(['municipal_budget', 'regional_grant', 'federal_grant', 'community_fund']).nullish(),
+  "nextInspectionDue": zod.string().nullish(),
+  "status": zod.enum(['completed', 'in_progress', 'scheduled', 'deferred']).optional(),
+  "inspectorName": zod.string().nullish(),
+  "notes": zod.string().nullish()
+})
+
+export const UpdateRoadMaintenanceRecordResponse = zod.object({
+  "id": zod.number(),
+  "streetId": zod.number(),
+  "streetName": zod.string().nullish(),
+  "streetCode": zod.string().nullish(),
+  "kebeleName": zod.string().nullish(),
+  "activityType": zod.enum(['inspection', 'resurfacing', 'pothole_patching', 'drainage_clearing', 'lighting_repair', 'expansion', 'emergency_repair']),
+  "pciScore": zod.number().nullish(),
+  "pciRating": zod.enum(['good', 'satisfactory', 'fair', 'poor', 'very_poor', 'serious', 'failed']).nullish(),
+  "distressTypes": zod.string().nullish(),
+  "performedDate": zod.string(),
+  "contractor": zod.string().nullish(),
+  "costEtb": zod.number().nullish(),
+  "fundingSource": zod.enum(['municipal_budget', 'regional_grant', 'federal_grant', 'community_fund']).nullish(),
+  "nextInspectionDue": zod.string().nullish(),
+  "status": zod.enum(['completed', 'in_progress', 'scheduled', 'deferred']),
+  "inspectorName": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a maintenance record
+ */
+export const DeleteRoadMaintenanceRecordParams = zod.object({
   "id": zod.coerce.number()
 })
 

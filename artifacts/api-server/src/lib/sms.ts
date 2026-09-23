@@ -1,11 +1,16 @@
-import AfricasTalking from "africastalking";
+function getTwilioConfig() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID?.trim();
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER?.trim();
+  const sender = messagingServiceSid || fromNumber;
 
-function getClient() {
-  const username = process.env.AT_USERNAME;
-  const apiKey = process.env.AT_API_KEY;
-  if (!username || !apiKey) return null;
-  const at = AfricasTalking({ username, apiKey });
-  return at.SMS;
+  if (!accountSid || !authToken || !sender) {
+    return null;
+  }
+
+  const isServiceSid = sender.startsWith("MG");
+  return { accountSid, authToken, sender, isServiceSid };
 }
 
 function formatPhone(phone: string): string {
@@ -18,25 +23,76 @@ function formatPhone(phone: string): string {
   if (digits.startsWith("251") && digits.length === 12) {
     return `+${digits}`;
   }
-  if (digits.startsWith("+")) return phone.trim();
+  if (phone.trim().startsWith("+")) {
+    return phone.trim();
+  }
   return `+${digits}`;
 }
 
-async function send(to: string, message: string, logger?: { error: (obj: unknown, msg: string) => void }): Promise<void> {
-  const sms = getClient();
-  if (!sms) {
-    // Credentials not yet configured — log and skip silently
-    console.warn("[SMS] AT_USERNAME / AT_API_KEY not set. Skipping SMS.");
+async function sendTwilioSms(
+  to: string,
+  message: string,
+  logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
+): Promise<void> {
+  const config = getTwilioConfig();
+  if (!config) {
+    console.warn(
+      "[Twilio SMS] TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_MESSAGING_SERVICE_SID (or TWILIO_PHONE_NUMBER) not set. Skipping SMS.",
+    );
     return;
   }
-  const formatted = formatPhone(to);
+
+  const formattedTo = formatPhone(to);
+  const endpoint = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(config.accountSid)}/Messages.json`;
+  const authHeader = `Basic ${Buffer.from(`${config.accountSid}:${config.authToken}`).toString("base64")}`;
+
+  const bodyParams = new URLSearchParams();
+  bodyParams.append("To", formattedTo);
+  if (config.isServiceSid) {
+    bodyParams.append("MessagingServiceSid", config.sender);
+  } else {
+    bodyParams.append("From", config.sender);
+  }
+  bodyParams.append("Body", message);
+
   try {
-    await sms.send({ to: [formatted], message });
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: bodyParams.toString(),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const errPayload = {
+        status: response.status,
+        code: (data as { code?: number }).code,
+        message: (data as { message?: string }).message ?? "Twilio API error",
+        to: formattedTo,
+      };
+      if (logger) {
+        logger.error(errPayload, "Failed to send Twilio SMS");
+      } else {
+        console.error("[Twilio SMS] Error sending SMS:", errPayload);
+      }
+      return;
+    }
+
+    const sid = (data as { sid?: string }).sid;
+    if (logger?.info) {
+      logger.info({ sid, to: formattedTo }, "Twilio SMS dispatched successfully");
+    } else {
+      console.log(`[Twilio SMS] Dispatched to ${formattedTo} (SID: ${sid})`);
+    }
   } catch (err) {
     if (logger) {
-      logger.error({ err, to: formatted }, "Failed to send SMS");
+      logger.error({ err, to: formattedTo }, "Network/unexpected error sending Twilio SMS");
     } else {
-      console.error("[SMS] Send failed:", err);
+      console.error("[Twilio SMS] Unexpected error:", err);
     }
   }
 }
@@ -45,22 +101,49 @@ export async function sendKebeleVerifiedSms(
   ownerName: string,
   ownerPhone: string,
   propertyAddress: string,
-  logger?: { error: (obj: unknown, msg: string) => void },
+  logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
 ): Promise<void> {
   const message =
     `Dear ${ownerName}, your property (${propertyAddress}) has been VERIFIED by the Kebele Officer. ` +
     `It is now awaiting final approval from the City Office. - Jimma City Administration`;
-  await send(ownerPhone, message, logger);
+  await sendTwilioSms(ownerPhone, message, logger);
 }
 
 export async function sendCityApprovedSms(
   ownerName: string,
   ownerPhone: string,
   addressCode: string,
-  logger?: { error: (obj: unknown, msg: string) => void },
+  logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
 ): Promise<void> {
   const message =
     `Dear ${ownerName}, your property has been OFFICIALLY APPROVED by Jimma City Administration. ` +
     `Your official address code is: ${addressCode}. Keep this for your records. - Jimma City Administration`;
-  await send(ownerPhone, message, logger);
+  await sendTwilioSms(ownerPhone, message, logger);
 }
+
+export async function sendKebeleOfficerSubmissionSms(
+  officerPhone: string,
+  propertyAddress: string,
+  kebele: string,
+  ownerName: string,
+  logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
+): Promise<void> {
+  const message =
+    `[ACTION REQUIRED] A new property (${propertyAddress}) in Kebele ${kebele} (Owner: ${ownerName}) ` +
+    `has been submitted by the field enumerator and is ready for your verification. - Jimma City Administration`;
+  await sendTwilioSms(officerPhone, message, logger);
+}
+
+export async function sendCityOfficerApprovalNeededSms(
+  officerPhone: string,
+  propertyAddress: string,
+  kebele: string,
+  ownerName: string,
+  logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
+): Promise<void> {
+  const message =
+    `[ACTION REQUIRED] Property (${propertyAddress}) in Kebele ${kebele} (Owner: ${ownerName}) ` +
+    `has been VERIFIED by the Kebele Officer and is waiting for your final City approval. - Jimma City Administration`;
+  await sendTwilioSms(officerPhone, message, logger);
+}
+

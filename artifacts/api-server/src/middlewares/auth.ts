@@ -34,13 +34,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 }
 
-export function requireRole(...roles: string[]) {
+export function requireRole(...roles: (string | string[])[]) {
+  const allowed = roles.flat();
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (!roles.includes(req.user.role)) {
+    if (!allowed.includes(req.user.role)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }

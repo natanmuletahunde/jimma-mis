@@ -21,7 +21,12 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import { auditReq } from "../lib/audit";
-import { sendKebeleVerifiedSms, sendCityApprovedSms } from "../lib/sms";
+import {
+  sendKebeleVerifiedSms,
+  sendCityApprovedSms,
+  sendKebeleOfficerSubmissionSms,
+  sendCityOfficerApprovalNeededSms,
+} from "../lib/sms";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, "../uploads");
@@ -345,6 +350,30 @@ router.post("/properties/:id/submit", requireAuth, async (req, res): Promise<voi
   await auditReq(req, req.user!.userId, "submit_property", {
     entityType: "property", entityId: id, entityName: existing.ownerName,
   });
+
+  // Non-blocking notification to Kebele Officer
+  (async () => {
+    try {
+      const displayAddress = `${existing.streetName}${existing.houseNumber ? " #" + existing.houseNumber : ""}`;
+      const kebeleOfficers = await db
+        .select({ phone: usersTable.phone })
+        .from(usersTable)
+        .where(eq(usersTable.role, "kebele_officer"));
+
+      const phoneSet = new Set<string>();
+      for (const ko of kebeleOfficers) {
+        if (ko.phone?.trim()) phoneSet.add(ko.phone.trim());
+      }
+      if (phoneSet.size === 0) phoneSet.add("0954913498");
+
+      for (const p of phoneSet) {
+        await sendKebeleOfficerSubmissionSms(p, displayAddress, existing.kebele, existing.ownerName, req.log);
+      }
+    } catch (err) {
+      req.log.error({ err }, "Failed to send Kebele Officer alert SMS");
+    }
+  })().catch(() => {});
+
   res.json(serializeProperty(updated, null));
 });
 
@@ -456,15 +485,39 @@ router.post("/properties/:id/approve", requireAuth, requireRole("admin", "city_o
     details: remark ?? null,
   });
 
-  // Fire-and-forget SMS alerts to the property owner
+  // Fire-and-forget SMS alerts to the property owner & city officers
+  const displayAddress = `${existing.streetName}${existing.houseNumber ? " #" + existing.houseNumber : ""}, ${existing.kebele}`;
   const phone = existing.ownerPhone?.trim();
   if (phone) {
-    const displayAddress = `${existing.streetName}${existing.houseNumber ? " #" + existing.houseNumber : ""}, ${existing.kebele}`;
     if (newStatus === "kebele_verified") {
       sendKebeleVerifiedSms(existing.ownerName, phone, displayAddress, req.log).catch(() => {});
     } else if (newStatus === "approved") {
       sendCityApprovedSms(existing.ownerName, phone, updated.addressCode ?? addressCode ?? "", req.log).catch(() => {});
     }
+  }
+
+  // When Kebele Officer verifies, alert City Officers that final approval is needed
+  if (newStatus === "kebele_verified") {
+    (async () => {
+      try {
+        const cityOfficers = await db
+          .select({ phone: usersTable.phone })
+          .from(usersTable)
+          .where(eq(usersTable.role, "city_officer"));
+
+        const cityPhoneSet = new Set<string>();
+        for (const co of cityOfficers) {
+          if (co.phone?.trim()) cityPhoneSet.add(co.phone.trim());
+        }
+        if (cityPhoneSet.size === 0) cityPhoneSet.add("0954913498");
+
+        for (const p of cityPhoneSet) {
+          await sendCityOfficerApprovalNeededSms(p, displayAddress, existing.kebele, existing.ownerName, req.log);
+        }
+      } catch (err) {
+        req.log.error({ err }, "Failed to send City Officer alert SMS");
+      }
+    })().catch(() => {});
   }
 
   res.json(serializeProperty(updated, null));
