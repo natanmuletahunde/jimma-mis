@@ -215,7 +215,7 @@ export default function MapView() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
     const map = L.map(mapRef.current, { zoomControl: true }).setView(
-      [7.6667, 36.8333],
+      [7.8540, 36.6500],
       13,
     );
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -427,11 +427,16 @@ export default function MapView() {
       {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <MapIcon className="w-6 h-6 text-primary" /> GIS Map Dashboard
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Geospatial view of all registered properties in Jimma City.
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <MapIcon className="w-6 h-6 text-primary" /> GIS Map Dashboard
+            </h2>
+            <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-800 border-emerald-300 font-mono">
+              PostGIS 3.6 Spatial
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Geospatial view of all registered properties and street corridors in Agaro City.
           </p>
         </div>
         {/* Banner shown when arriving from the property list */}
@@ -478,12 +483,14 @@ export default function MapView() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Kebeles</SelectItem>
+              <SelectItem value="Kebele 01">Kebele 01</SelectItem>
+              <SelectItem value="Kebele 02">Kebele 02</SelectItem>
+              <SelectItem value="Kebele 03">Kebele 03</SelectItem>
+              <SelectItem value="Kebele 04">Kebele 04</SelectItem>
+              <SelectItem value="Kebele 05">Kebele 05</SelectItem>
               <SelectItem value="AJR">AJR</SelectItem>
               <SelectItem value="BCH">BCH</SelectItem>
               <SelectItem value="FMG">FMG</SelectItem>
-              <SelectItem value="Awetu Mandera">Awetu Mandera</SelectItem>
-              <SelectItem value="Bossa Addis Ketema">Bossa Addis Ketema</SelectItem>
-              <SelectItem value="Ginjo">Ginjo</SelectItem>
             </SelectContent>
           </Select>
 

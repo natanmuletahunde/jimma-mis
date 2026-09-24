@@ -41,12 +41,12 @@ export function Header() {
             <Sidebar />
           </SheetContent>
         </Sheet>
-        <div className="font-semibold text-lg tracking-tight">Jimma MIS</div>
+        <div className="font-semibold text-lg tracking-tight">Agaro MIS</div>
       </div>
       
       <div className="hidden md:block">
         <h1 className="text-xl font-semibold text-foreground tracking-tight">
-          Property Management System
+          Agaro City Digital Housing & Addressing System
         </h1>
       </div>
 

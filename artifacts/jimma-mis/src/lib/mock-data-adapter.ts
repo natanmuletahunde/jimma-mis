@@ -1,14 +1,12 @@
-// Jimma City Digital Street Address & Housing MIS - Client-Side Seed Data Adapter
+// Agaro City Digital Street Address & Housing MIS - Client-Side Seed Data Adapter
 // Provides full interactive functionality for demo/production deployment
 
 const SEED_KEBELES = [
-  { id: 1, name: "Ginjo", code: "GNJ", city: "Jimma", subCity: "Jimma Central", district: "Jimma", status: "active" },
-  { id: 2, name: "Bacho Bore", code: "BCH", city: "Jimma", subCity: "Jimma West", district: "Jimma", status: "active" },
-  { id: 3, name: "Hermata", code: "HRM", city: "Jimma", subCity: "Jimma East", district: "Jimma", status: "active" },
-  { id: 4, name: "Mentina", code: "MNT", city: "Jimma", subCity: "Jimma North", district: "Jimma", status: "active" },
-  { id: 5, name: "Mendera Kocher", code: "MDK", city: "Jimma", subCity: "Jimma South", district: "Jimma", status: "active" },
-  { id: 6, name: "Feres Megala", code: "FMG", city: "Jimma", subCity: "Jimma Central", district: "Jimma", status: "active" },
-  { id: 7, name: "Ajora", code: "AJR", city: "Jimma", subCity: "Jimma Central", district: "Jimma", status: "active" },
+  { id: 1, name: "Kebele 01", code: "KB01", city: "Agaro", subCity: "Agaro North", district: "Jimma Zone", status: "active" },
+  { id: 2, name: "Kebele 02", code: "KB02", city: "Agaro", subCity: "Agaro East", district: "Jimma Zone", status: "active" },
+  { id: 3, name: "Kebele 03", code: "KB03", city: "Agaro", subCity: "Agaro South", district: "Jimma Zone", status: "active" },
+  { id: 4, name: "Kebele 04", code: "KB04", city: "Agaro", subCity: "Agaro West", district: "Jimma Zone", status: "active" },
+  { id: 5, name: "Kebele 05", code: "KB05", city: "Agaro", subCity: "Agaro Central", district: "Jimma Zone", status: "active" },
 ];
 
 const SEED_STREETS = [
@@ -23,7 +21,7 @@ const SEED_STREETS = [
 const SEED_PROPERTIES = [
   {
     id: 1,
-    addressCode: "JMA-GNJ-01-001",
+    addressCode: "AGA-KB01-01-001",
     houseNumber: "101",
     buildingName: "Aba Jifar Commercial Plaza",
     propertyType: "commercial",

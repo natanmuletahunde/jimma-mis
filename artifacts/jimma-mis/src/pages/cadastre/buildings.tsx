@@ -211,7 +211,7 @@ export default function BuildingsRegistryPage() {
 
   const openCreateModal = () => {
     setEditingBuilding(null);
-    setBuildingCode(`BLD-JMA-${Date.now().toString().slice(-5)}`);
+    setBuildingCode(`BLD-AGA-${Date.now().toString().slice(-5)}`);
     setBuildingName("");
     setParcelId(parcelsList[0]?.id || "");
     setStructureType("reinforced_concrete");

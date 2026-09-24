@@ -111,12 +111,15 @@ router.get("/kebeles", requireAuth, async (req, res): Promise<void> => {
 
   const conditions: ReturnType<typeof eq>[] = [];
 
-  if (user.role === "kebele_officer" || user.role === "enumerator") {
-    // Restricted roles: active kebeles only, scoped to their assigned kebele
+  if (user.role === "kebele_officer") {
+    // Restricted role: active kebeles only, scoped to their assigned kebele if set
     conditions.push(eq(kebelesTable.status, "active") as ReturnType<typeof eq>);
     if (user.kebeleId) {
       conditions.push(eq(kebelesTable.id, user.kebeleId) as ReturnType<typeof eq>);
     }
+  } else if (user.role === "enumerator") {
+    // Enumerator: can survey any active kebele in the municipality
+    conditions.push(eq(kebelesTable.status, "active") as ReturnType<typeof eq>);
   } else {
     if (status) conditions.push(eq(kebelesTable.status, status) as ReturnType<typeof eq>);
   }
@@ -232,7 +235,10 @@ router.get("/streets", requireAuth, async (req, res): Promise<void> => {
 
   if (user.role === "kebele_officer" || user.role === "enumerator") {
     conditions.push(eq(streetsTable.status, "active") as ReturnType<typeof eq>);
-    if (user.kebeleId) {
+    if (kebele_id) {
+      const kid = parseInt(kebele_id, 10);
+      if (!isNaN(kid)) conditions.push(eq(streetsTable.kebeleId, kid) as ReturnType<typeof eq>);
+    } else if (user.kebeleId) {
       conditions.push(eq(streetsTable.kebeleId, user.kebeleId) as ReturnType<typeof eq>);
     }
   } else {
@@ -460,7 +466,10 @@ router.get("/blocks", requireAuth, async (req, res): Promise<void> => {
 
   if (user.role === "kebele_officer" || user.role === "enumerator") {
     conditions.push(eq(blocksTable.status, "active") as ReturnType<typeof eq>);
-    if (user.kebeleId) {
+    if (kebele_id) {
+      const kid = parseInt(kebele_id, 10);
+      if (!isNaN(kid)) conditions.push(eq(blocksTable.kebeleId, kid) as ReturnType<typeof eq>);
+    } else if (user.kebeleId && !street_id) {
       conditions.push(eq(blocksTable.kebeleId, user.kebeleId) as ReturnType<typeof eq>);
     }
   } else {

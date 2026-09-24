@@ -14,13 +14,13 @@ export async function sendPasswordResetEmail(
   resetLink: string,
 ): Promise<void> {
   await transporter.sendMail({
-    from: `"Jimma City Administration" <${process.env.SMTP_FROM_EMAIL}>`,
+    from: `"Agaro City Administration" <${process.env.SMTP_FROM_EMAIL}>`,
     to: toEmail,
-    subject: "Password Reset — Jimma City Address MIS",
+    subject: "Password Reset — Agaro City Address MIS",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 32px;">
         <div style="background: #0d2447; padding: 24px 32px; border-radius: 8px 8px 0 0; text-align: center;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Jimma City Address MIS</h1>
+          <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Agaro City Address MIS</h1>
           <p style="color: #93c5fd; margin: 8px 0 0; font-size: 13px;">Municipal Information System</p>
         </div>
         <div style="background: #ffffff; padding: 32px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0; border-top: none;">
@@ -44,7 +44,7 @@ export async function sendPasswordResetEmail(
           </p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-            © ${new Date().getFullYear()} Jimma City Administration. All rights reserved.
+            © ${new Date().getFullYear()} Agaro City Administration. All rights reserved.
           </p>
         </div>
       </div>

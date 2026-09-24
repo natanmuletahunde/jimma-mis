@@ -12,6 +12,7 @@ import auditLogsRouter from "./audit-logs";
 import roadInventoryRouter from "./road-inventory";
 import parcelsRouter from "./parcels";
 import buildingsRouter from "./buildings";
+import spatialRouter from "./spatial";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(auditLogsRouter);
 router.use(roadInventoryRouter);
 router.use("/parcels", parcelsRouter);
 router.use("/buildings", buildingsRouter);
+router.use("/spatial", spatialRouter);
 
 export default router;

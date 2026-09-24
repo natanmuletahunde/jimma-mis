@@ -148,7 +148,7 @@ export default function Login() {
               <div className="flex flex-col items-center mb-6 lg:hidden">
                 <img
                   src="/logo.png"
-                  alt="Jimma City MIS"
+                  alt="Agaro City MIS"
                   className="w-28 h-28 object-contain mb-3"
                 />
               </div>

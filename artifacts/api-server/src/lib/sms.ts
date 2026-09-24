@@ -105,7 +105,7 @@ export async function sendKebeleVerifiedSms(
 ): Promise<void> {
   const message =
     `Dear ${ownerName}, your property (${propertyAddress}) has been VERIFIED by the Kebele Officer. ` +
-    `It is now awaiting final approval from the City Office. - Jimma City Administration`;
+    `It is now awaiting final approval from the City Office. - Agaro City Administration`;
   await sendTwilioSms(ownerPhone, message, logger);
 }
 
@@ -116,8 +116,8 @@ export async function sendCityApprovedSms(
   logger?: { error: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void },
 ): Promise<void> {
   const message =
-    `Dear ${ownerName}, your property has been OFFICIALLY APPROVED by Jimma City Administration. ` +
-    `Your official address code is: ${addressCode}. Keep this for your records. - Jimma City Administration`;
+    `Dear ${ownerName}, your property has been OFFICIALLY APPROVED by Agaro City Administration. ` +
+    `Your official address code is: ${addressCode}. Keep this for your records. - Agaro City Administration`;
   await sendTwilioSms(ownerPhone, message, logger);
 }
 
@@ -130,7 +130,7 @@ export async function sendKebeleOfficerSubmissionSms(
 ): Promise<void> {
   const message =
     `[ACTION REQUIRED] A new property (${propertyAddress}) in Kebele ${kebele} (Owner: ${ownerName}) ` +
-    `has been submitted by the field enumerator and is ready for your verification. - Jimma City Administration`;
+    `has been submitted by the field enumerator and is ready for your verification. - Agaro City Administration`;
   await sendTwilioSms(officerPhone, message, logger);
 }
 
@@ -143,7 +143,7 @@ export async function sendCityOfficerApprovalNeededSms(
 ): Promise<void> {
   const message =
     `[ACTION REQUIRED] Property (${propertyAddress}) in Kebele ${kebele} (Owner: ${ownerName}) ` +
-    `has been VERIFIED by the Kebele Officer and is waiting for your final City approval. - Jimma City Administration`;
+    `has been VERIFIED by the Kebele Officer and is waiting for your final City approval. - Agaro City Administration`;
   await sendTwilioSms(officerPhone, message, logger);
 }
 

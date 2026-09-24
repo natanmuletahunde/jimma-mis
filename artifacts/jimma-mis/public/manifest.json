@@ -1,7 +1,7 @@
 {
-  "name": "Jimma City Digital Street Address MIS",
-  "short_name": "Jimma MIS",
-  "description": "Mobile field data collection for Jimma City property registration",
+  "name": "Agaro City Digital Housing & Addressing MIS",
+  "short_name": "Agaro MIS",
+  "description": "Mobile field data collection for Agaro City property registration",
   "start_url": "./mobile/field-collection",
   "scope": "./",
   "display": "standalone",

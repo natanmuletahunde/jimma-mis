@@ -234,6 +234,7 @@ export default function NewProperty() {
         form.setValue("longitude", pos.coords.longitude);
         setGpsLoading(false);
         toast({ title: "GPS Captured", description: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}` });
+        detectKebeleFromGps(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
         setGpsLoading(false);
@@ -241,6 +242,41 @@ export default function NewProperty() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const [detectingKebele, setDetectingKebele] = useState(false);
+
+  const detectKebeleFromGps = async (lat: number, lng: number) => {
+    setDetectingKebele(true);
+    try {
+      const token = localStorage.getItem("jimma_token");
+      const res = await fetch("/api/spatial/detect-kebele", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ latitude: lat, longitude: lng }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.kebele) {
+          const matched = kebeles.find(
+            (k) => k.code === data.kebele.code || k.name.toLowerCase() === data.kebele.name.toLowerCase()
+          );
+          if (matched) {
+            form.setValue("kebeleId", matched.id);
+            form.setValue("kebele", matched.code);
+            toast({
+              title: "PostGIS Spatial Match (ST_Contains)",
+              description: `Kebele automatically detected as "${matched.name}"`,
+            });
+          }
+        }
+      }
+    } catch {} finally {
+      setDetectingKebele(false);
+    }
   };
 
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -531,6 +567,23 @@ export default function NewProperty() {
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       {watchedLat!.toFixed(6)}, {watchedLng!.toFixed(6)}
                     </div>
+                  )}
+                  {hasGps && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => detectKebeleFromGps(watchedLat!, watchedLng!)}
+                      disabled={detectingKebele}
+                      className="text-xs h-8 text-emerald-800 border-emerald-300 bg-emerald-50 hover:bg-emerald-100"
+                    >
+                      {detectingKebele ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <MapPin className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                      )}
+                      Auto-Detect Kebele (PostGIS)
+                    </Button>
                   )}
                 </div>
 

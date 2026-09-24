@@ -172,16 +172,16 @@ export default function LandParcelsPage() {
 
   const openCreateModal = () => {
     setEditingParcel(null);
-    setParcelUpi(`ET-OR-JMA-${Date.now().toString().slice(-6)}`);
-    setKebele("Ginjo");
+    setParcelUpi(`ET-OR-AGA-${Date.now().toString().slice(-6)}`);
+    setKebele("Kebele 01");
     setBlockCode("BLK-01");
     setStreetName("");
     setAreaSqm("450");
     setLandTenure("leasehold");
-    setTitleDeedNumber(`TD-JMA-${Math.floor(100000 + Math.random() * 900000)}`);
+    setTitleDeedNumber(`TD-AGA-${Math.floor(100000 + Math.random() * 900000)}`);
     setZoningClassification("residential");
-    setCenterLat("7.6734");
-    setCenterLng("36.8344");
+    setCenterLat("7.8540");
+    setCenterLng("36.6500");
     setNotes("");
     setIsFormOpen(true);
   };
@@ -386,12 +386,14 @@ export default function LandParcelsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Kebeles</SelectItem>
+              <SelectItem value="Kebele 01">Kebele 01</SelectItem>
+              <SelectItem value="Kebele 02">Kebele 02</SelectItem>
+              <SelectItem value="Kebele 03">Kebele 03</SelectItem>
+              <SelectItem value="Kebele 04">Kebele 04</SelectItem>
+              <SelectItem value="Kebele 05">Kebele 05</SelectItem>
               <SelectItem value="AJR">AJR</SelectItem>
               <SelectItem value="BCH">BCH</SelectItem>
               <SelectItem value="FMG">FMG</SelectItem>
-              <SelectItem value="Awetu Mandera">Awetu Mandera</SelectItem>
-              <SelectItem value="Bossa Addis Ketema">Bossa Addis Ketema</SelectItem>
-              <SelectItem value="Ginjo">Ginjo</SelectItem>
             </SelectContent>
           </Select>
 

@@ -63,7 +63,7 @@ function generateAddressCode(
   const st = streetName.toUpperCase().replace(/[^A-Z0-9]/g, "").substring(0, 6);
   const bl = (blockCode ?? "000").replace(/[^A-Z0-9]/g, "");
   const hn = (houseNumber ?? "000").replace(/[^A-Z0-9]/g, "");
-  return `JIM-KB${kb}-ST${st}-BL${bl}-HN${hn}`;
+  return `AGA-KB${kb}-ST${st}-BL${bl}-HN${hn}`;
 }
 
 function serializeProperty(prop: typeof propertiesTable.$inferSelect, user?: { id: number; fullName: string; role: string } | null) {

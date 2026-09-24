@@ -44,7 +44,7 @@ export function buildQrPayload(props: AddressPlateProps, format: QrFormat = "tex
 
   // Normal human-readable plain text format
   const lines: string[] = [
-    "Jimma City Digital Address",
+    "Agaro City Digital Address",
     `Address Code: ${props.addressCode}`,
     `Owner: ${props.ownerName || "N/A"}`,
     `Kebele: ${props.kebele || "N/A"}`,
@@ -119,14 +119,14 @@ export function AddressPlate({
         <div className="text-center pb-3 border-b border-emerald-400/30">
           <div className="flex items-center justify-center gap-2 mb-0.5">
             <div className="w-6 h-6 rounded-full bg-amber-400 text-emerald-950 font-black text-xs flex items-center justify-center shadow">
-              J
+              A
             </div>
             <h3 className="font-extrabold tracking-widest text-[13px] uppercase text-amber-300 drop-shadow-sm">
-              Jimma City Administration
+              Agaro City Administration
             </h3>
           </div>
           <p className="text-[10px] tracking-wider uppercase text-emerald-100/90 font-medium">
-            Bulchiinsa Magaalaa Jimmaa • Digital Addressing System
+            Bulchiinsa Magaalaa Aggaroo • Digital Addressing System
           </p>
         </div>
 
